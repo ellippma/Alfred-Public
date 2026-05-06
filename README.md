@@ -77,7 +77,7 @@ You should see `Python 3.x.x`. If you don't, download it from [python.org](https
 Open **Terminal** (press `Cmd + Space`, type "Terminal", press Enter) and paste this single command:
 
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/ellippma/Alfred/main/setup/install.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/ellippma/Alfred-Public/main/setup/install.sh)"
 ```
 
 The installer will check your requirements, download Alfred, and launch the setup wizard automatically.

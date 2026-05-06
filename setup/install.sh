@@ -6,7 +6,7 @@
 
 set -e
 
-REPO_URL="https://github.com/ellippma/Alfred.git"
+REPO_URL="https://github.com/ellippma/Alfred-Public.git"
 INSTALL_DIR="$HOME/alfred-repo"
 
 # ── Colors ────────────────────────────────────────────────────────────────────
