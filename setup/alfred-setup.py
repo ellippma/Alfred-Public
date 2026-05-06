@@ -607,21 +607,26 @@ def main():
     ⭐ Recommended: Gmail, Google Drive, Granola
 """)
 
-    # Detect MCPs first — fail fast before user types anything
+    # Detect MCPs — warn if not found but allow user to proceed
     prefixes = detect_mcp_ids()
     missing = [s for s in ("slack", "calendar") if s not in prefixes]
     if missing:
         svc_names = {"slack": "Slack", "calendar": "Google Calendar"}
         print(f"""
-  ❌  SETUP CANNOT CONTINUE — required MCP tools not detected:
-      {', '.join(svc_names[s] for s in missing)}
+  ⚠️   MCP tools not auto-detected: {', '.join(svc_names[s] for s in missing)}
 
-  To connect them:
+  This can happen when MCPs are connected via Claude Code's UI.
+  If you've already connected them (green dot in Settings → MCP Servers),
+  type 'y' to continue — Alfred will still work correctly.
+
+  If you haven't connected them yet:
   1. Open Claude Code settings (gear icon or Cmd+,)
   2. Go to Integrations → MCP Servers and connect the missing tools
   3. Re-run this wizard: python3 {__file__}
 """)
-        sys.exit(1)
+        cont = input("  Continue anyway? (y/n): ").strip().lower()
+        if cont != "y":
+            sys.exit(0)
 
     # Collect config — loop until user confirms
     while True:
