@@ -15,8 +15,6 @@ Read all memory files:
 - `{{MEMORY_DIR}}/jira_state.md`
 - `{{MEMORY_DIR}}/project_q2_initiatives.md`
 
-If `{{CANVAS_FEEDBACK_ID}}` is not `CANVAS_FEEDBACK_ID_PLACEHOLDER`, read the Alfred feedback canvas (`{{CANVAS_FEEDBACK_ID}}`, workspace `{{SLACK_WORKSPACE_ID}}`) for standing instructions.
-
 # Step 2 — Pull week data (Mon–Fri)
 
 **Granola** — `mcp__granola__list_meetings` for this week. For each meeting extract:

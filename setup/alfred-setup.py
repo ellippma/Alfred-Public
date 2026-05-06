@@ -21,7 +21,7 @@ SETTINGS_LOCAL = CLAUDE_DIR / "settings.local.json"
 CONFIG_PATH    = Path.home() / ".alfred-config.json"
 
 KNOWN_SERVICES = {
-    "slack":    ["slack_send_message", "slack_read_canvas", "slack_search_public"],
+    "slack":    ["slack_send_message", "slack_search_public"],
     "gmail":    ["search_threads", "create_draft"],
     "calendar": ["list_events", "create_event"],
     "drive":    ["search_files", "read_file_content"],
@@ -30,7 +30,7 @@ KNOWN_SERVICES = {
 
 # Tools Alfred actually calls — pre-approved during install so user never sees prompts
 ALFRED_TOOLS = {
-    "slack":    ["slack_read_canvas", "slack_search_channels", "slack_search_public_and_private", "slack_send_message_draft", "slack_create_canvas", "slack_update_canvas"],
+    "slack":    ["slack_search_channels", "slack_search_public_and_private", "slack_send_message_draft"],
     "calendar": ["list_events", "create_event"],
     "gmail":    ["search_threads", "create_draft"],
     "drive":    ["search_files", "list_recent_files"],
@@ -233,9 +233,6 @@ def collect_config():
         "BRIEFS_DIR_ESC":       briefs_dir_esc,
         "REPO_DIR":             repo_dir,
         "HOME_DIR":             str(Path.home()),
-        # Canvas IDs — filled in by Claude during Task 2 of finish-setup-prompt
-        "CANVAS_TODO_ID":       "CANVAS_TODO_ID_PLACEHOLDER",
-        "CANVAS_FEEDBACK_ID":   "CANVAS_FEEDBACK_ID_PLACEHOLDER",
         "SLACK_SIGNAL_FILTER":  f"Surface signals relevant to {product} and {role}. Filter out deal-specific noise unless it involves {t1_name1} or {mgr_name}.",
         # Initiative placeholders — user fills these in later
         "INITIATIVE_1_NAME":    product,
@@ -571,27 +568,7 @@ The content is everything between <<<FRIDAY_SKILL_START>>> and <<<FRIDAY_SKILL_E
 
 ---
 
-# Task 2 — Create Slack canvases
-
-Using the Slack MCP ({config["MCP_SLACK"]}):
-
-1. Create a canvas called "Alfred — To-Do" in workspace {config["SLACK_WORKSPACE_ID"]}. Format: checklist items with `- [ ] {{what}} — owner: {{who}} — due: {{when}}`. Note the canvas ID returned.
-
-2. Create a canvas called "Alfred — Feedback" with three sections:
-   - 🚫 Not a fire
-   - 📌 Standing instructions
-   - 📝 One-off notes
-   Note the canvas ID returned.
-
-After both canvases are created, update `{memory_dir}/project_personal_cos.md`:
-- Replace `CANVAS_TODO_ID_PLACEHOLDER` with the actual To-Do canvas ID
-- Replace `CANVAS_FEEDBACK_ID_PLACEHOLDER` with the actual Feedback canvas ID
-
-Also update the SKILL.md files to replace these same placeholders.
-
----
-
-# Task 3 — Generate first brief
+# Task 2 — Generate first brief
 
 Run the morning brief SKILL.md to generate {config["USER_NAME"]}'s first Alfred brief. Deliver it as HTML to `{config["BRIEFS_DIR"]}` and open it in the browser.
 
@@ -662,8 +639,7 @@ def main():
   2. Press Cmd+N to start a new session
   3. Press Cmd+V to paste and then press Enter
 
-  Claude will register your scheduled tasks, create your Slack
-  canvases, and generate your first brief right now.
+  Claude will register your scheduled tasks and generate your first brief right now.
 
   ─────────────────────────────────────────────
   If the paste doesn't work, the prompt is also saved here:
@@ -683,8 +659,7 @@ def main():
   3. Open Claude Code, press Cmd+N for a new session
   4. Paste (Cmd+V) and press Enter
 
-  Claude will register your scheduled tasks, create your Slack
-  canvases, and generate your first brief right now.
+  Claude will register your scheduled tasks and generate your first brief right now.
 """)
 
     print(f"""  ─────────────────────────────────────────────

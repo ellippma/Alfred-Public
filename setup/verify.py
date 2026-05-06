@@ -52,7 +52,7 @@ repo_dir    = Path(config.get("paths", {}).get("repo_dir",   ""))
 home        = Path.home()
 
 # ── Section 1: Core files ─────────────────────────────────────────────────────
-section("1 / 5  Core files")
+section("1 / 4  Core files")
 
 check("Config file exists",          CONFIG_PATH.exists())
 check("Briefs directory exists",     briefs_dir.is_dir(),
@@ -74,7 +74,7 @@ check("Briefs directory is writable", writable,
       f"Check permissions: chmod 755 \"{briefs_dir}\"")
 
 # ── Section 2: Scheduled tasks ────────────────────────────────────────────────
-section("2 / 5  Scheduled tasks")
+section("2 / 4  Scheduled tasks")
 
 PLACEHOLDER_SIGNALS = ("Read and execute the instructions", "SKILL.md\n")
 
@@ -94,7 +94,7 @@ for task in ["morning-brief", "pre-meeting-brief", "friday-wrap"]:
               f"Open {skill_path} and search for '{{{{' — replace any remaining placeholders manually.")
 
 # ── Section 3: Memory files ───────────────────────────────────────────────────
-section("3 / 5  Memory files")
+section("3 / 4  Memory files")
 
 required_memory = [
     "MEMORY.md", "user_role.md", "stakeholders.md", "calibrations.md",
@@ -114,38 +114,10 @@ for fname in required_memory:
         placeholder_files.append(fname)
 check("No unfilled placeholders in memory files", len(placeholder_files) == 0,
       f"Files with unfilled placeholders: {', '.join(placeholder_files)}. "
-      "Re-run the finish-setup prompt to fill canvas IDs, or edit files manually.")
+      "Re-run the finish-setup prompt, or edit the files manually.")
 
-# ── Section 4: Canvas IDs ─────────────────────────────────────────────────────
-section("4 / 5  Slack canvas IDs")
-
-cos_path = memory_dir / "project_personal_cos.md"
-canvas_ok = True
-if cos_path.exists():
-    cos_text = cos_path.read_text()
-    todo_ok     = "CANVAS_TODO_ID_PLACEHOLDER"     not in cos_text
-    feedback_ok = "CANVAS_FEEDBACK_ID_PLACEHOLDER" not in cos_text
-    check("To-Do canvas ID is set",     todo_ok,
-          "Canvas not created. See 'Manual canvas setup' in the README, then edit project_personal_cos.md AND morning-brief/SKILL.md replacing CANVAS_TODO_ID_PLACEHOLDER.")
-    check("Feedback canvas ID is set",  feedback_ok,
-          "Canvas not created. See 'Manual canvas setup' in the README, then edit project_personal_cos.md AND morning-brief/SKILL.md AND friday-wrap/SKILL.md replacing CANVAS_FEEDBACK_ID_PLACEHOLDER.")
-    canvas_ok = todo_ok and feedback_ok
-
-    # Also check SKILL.md files for leftover canvas placeholders
-    for task in ["morning-brief", "friday-wrap"]:
-        skill = CLAUDE_DIR / "scheduled-tasks" / task / "SKILL.md"
-        if skill.exists():
-            skill_text = skill.read_text()
-            for token, label in [("CANVAS_TODO_ID_PLACEHOLDER", "To-Do"), ("CANVAS_FEEDBACK_ID_PLACEHOLDER", "Feedback")]:
-                if token in skill_text:
-                    check(f"{task}/SKILL.md has {label} canvas ID", False,
-                          f"Edit {skill} and replace {token} with the real canvas ID.")
-else:
-    check("project_personal_cos.md exists for canvas ID check", False,
-          f"Re-run setup: python3 {repo_dir}/setup/alfred-setup.py")
-
-# ── Section 5: Slash command ──────────────────────────────────────────────────
-section("5 / 5  Slash command")
+# ── Section 4: Slash command ──────────────────────────────────────────────────
+section("4 / 4  Slash command")
 
 alfred_cmd = CLAUDE_DIR / "commands" / "alfred.md"
 check("/alfred command installed", alfred_cmd.exists(),
@@ -163,8 +135,6 @@ failed  = total - passed
 
 if failed == 0:
     print(f"\n  ✅  All {total} checks passed — Alfred is ready.")
-    if not canvas_ok:
-        pass  # already reported above
     print("""
   Your first brief will arrive at 7:57 AM tomorrow.
   Make sure Claude Code is running in the background.

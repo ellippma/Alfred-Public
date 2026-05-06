@@ -69,7 +69,6 @@ def main():
         "permissions": {
             "allow": [
                 "mcp__aaaaaaaa-0000-1111-2222-bbbbbbbbbbbb__slack_send_message",
-                "mcp__aaaaaaaa-0000-1111-2222-bbbbbbbbbbbb__slack_read_canvas",
                 "mcp__aaaaaaaa-0000-1111-2222-bbbbbbbbbbbb__slack_search_public",
                 "mcp__cccccccc-3333-4444-5555-dddddddddddd__list_events",
                 "mcp__cccccccc-3333-4444-5555-dddddddddddd__create_event",

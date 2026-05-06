@@ -19,7 +19,7 @@ Read these files:
 ## Step 2 — Pull live data relevant to the question
 Use only the tools needed to answer. Common patterns:
 
-**"What did I promise X?"** → search Granola for recent meetings with X, search Slack `from:me to:X` or in channels with X, read the to-do canvas `{{CANVAS_TODO_ID}}`
+**"What did I promise X?"** → search Granola for recent meetings with X, search Slack `from:me to:X` or in channels with X, read the Alfred Notepad via `python3 "{{BRIEFS_DIR}}/read-notepad.py"`
 
 **"What does X owe me?"** → search Granola for commitments from X, search Slack for X's recent messages about open items
 

@@ -106,7 +106,7 @@ When the wizard finishes, it automatically copies a setup prompt to your clipboa
 2. Press **Cmd + N** to open a new session
 3. Press **Cmd + V** to paste, then press **Enter**
 
-Claude will register your scheduled tasks, create your Slack canvases, and open your **first brief** in the browser — usually within 2–3 minutes.
+Claude will register your scheduled tasks and open your **first brief** in the browser — usually within 2–3 minutes.
 
 ---
 
@@ -126,7 +126,6 @@ It checks every install artifact and tells you exactly what to fix if anything i
 
 - ✅ Your first brief opens in your browser (within minutes of completing Step 3)
 - ✅ The verifier reports all checks passed
-- ✅ Two new Slack canvases appear in Slack: "Alfred — To-Do" and "Alfred — Feedback"
 - ✅ At 7:57 AM the next weekday, a macOS notification appears: *"Alfred — Morning Brief is ready"*
 
 > **Important: Claude Code must stay running** for Alfred's scheduled tasks to fire. You don't need to be actively using it — it just needs to be open in the background (it can be minimized or in the Dock). If you quit Claude Code, Alfred goes quiet until you reopen it.
@@ -173,20 +172,12 @@ The morning brief opens as a single HTML page in your browser. Here's what each 
 
 ## Teaching Alfred what matters
 
-Alfred learns from your feedback. Three ways to calibrate:
+Alfred learns from your feedback. Two ways to calibrate:
 
 **1. In the brief itself**
-Click the **✏️ FEEDBACK** button in the top bar of any brief. You can mark something "not a fire," add a standing instruction, or leave a one-off note.
+Click the **✏️ FEEDBACK** button in the top bar of any brief. You can mark something "not a fire," add a standing instruction, or leave a one-off note. Alfred picks up these files at the start of every brief run — you can submit multiple and they'll all be ingested.
 
-**2. Your Slack canvases**
-Alfred created two canvases in Slack when you ran setup:
-- **Alfred — To-Do**: your running task list Alfred tracks across briefs
-- **Alfred — Feedback**: three sections where you can leave permanent instructions
-  - 🚫 Not a fire — patterns Alfred should stop escalating
-  - 📌 Standing instructions — rules that apply every run
-  - 📝 One-off notes — things to do just once
-
-**3. Just tell Claude**
+**2. Just tell Claude**
 In any Claude Code session, say: *"That's not a fire because..."* or *"Always check X before flagging Y."* Alfred saves it automatically.
 
 ---
@@ -222,21 +213,6 @@ After setup, Alfred created memory files that describe you, your context, and yo
 **The brief opened but some sections are empty**
 - Alfred only shows sections with real data — an empty Fires section means no fires, which is good
 - If Granola sections are empty, make sure the Granola MCP is connected and you've had meetings this week
-- If the Slack canvas sections are missing, see "Slack canvases didn't get created" below
-
-**Slack canvases didn't get created automatically**
-
-If the verifier reports canvas IDs are missing, create them manually:
-
-1. In Slack, open any channel and click the **+** button next to the message bar → **Canvas**
-2. Name the first canvas **Alfred — To-Do**. The canvas URL will look like `https://yourworkspace.slack.com/docs/TXXXXXXXX/FXXXXXXXXX` — copy the ID starting with `F` at the end of the URL
-3. Create a second canvas named **Alfred — Feedback**. Add three bullet points: `🚫 Not a fire`, `📌 Standing instructions`, `📝 One-off notes`. Copy its ID the same way
-4. Open Terminal and run:
-```bash
-open ~/.claude/projects/
-```
-5. Open the folder matching your username → open `memory/project_personal_cos.md` in any text editor
-6. Replace `CANVAS_TODO_ID_PLACEHOLDER` with the To-Do canvas ID and `CANVAS_FEEDBACK_ID_PLACEHOLDER` with the Feedback canvas ID
 7. Re-run `python3 ~/alfred-repo/setup/verify.py` to confirm
 
 **Notepad isn't working**
@@ -311,7 +287,6 @@ Key placeholders:
 - `{{MEMORY_DIR}}` — absolute path to the user's Claude project memory directory
 - `{{BRIEFS_DIR}}` — where HTML briefs are saved
 - `{{MCP_SLACK}}`, `{{MCP_CALENDAR}}`, etc. — MCP tool ID prefixes (auto-detected)
-- `{{CANVAS_TODO_ID}}`, `{{CANVAS_FEEDBACK_ID}}` — filled in during Task 2 of finish-setup
 
 ### MCP ID detection
 
