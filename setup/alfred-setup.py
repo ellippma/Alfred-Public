@@ -96,30 +96,43 @@ def claude_project_segment():
 
 def detect_mcp_ids():
     """
-    Parse ~/.claude/settings.local.json to extract MCP service prefixes.
+    Parse Claude settings files to extract MCP service prefixes.
+    Checks both settings.local.json (manual) and settings.json (UI-connected).
     Returns dict: service_name → tool_prefix (e.g. 'slack' → 'mcp__UUID__')
     """
     prefixes = {}
-    if not SETTINGS_LOCAL.exists():
-        return prefixes
-    try:
-        data = json.loads(SETTINGS_LOCAL.read_text())
-        allowed = data.get("permissions", {}).get("allow", [])
-        for entry in allowed:
-            if not entry.startswith("mcp__"):
-                continue
-            # Format: mcp__{id}__{tool_name}  OR  mcp__{service}__{tool_name}
-            parts = entry.split("__", 2)
-            if len(parts) < 3:
-                continue
-            prefix = f"mcp__{parts[1]}__"
-            tool   = parts[2]
-            for service, tool_hints in KNOWN_SERVICES.items():
-                if any(hint in tool for hint in tool_hints):
-                    if service not in prefixes:
+    settings_files = [
+        CLAUDE_DIR / "settings.local.json",
+        CLAUDE_DIR / "settings.json",
+    ]
+    for settings_file in settings_files:
+        if not settings_file.exists():
+            continue
+        try:
+            data = json.loads(settings_file.read_text())
+            # Check permissions/allow list
+            allowed = data.get("permissions", {}).get("allow", [])
+            # Also check mcpServers keys for service names
+            mcp_servers = data.get("mcpServers", {})
+            for server_name in mcp_servers:
+                prefix = f"mcp__{server_name}__"
+                for service, tool_hints in KNOWN_SERVICES.items():
+                    if service not in prefixes and any(hint in server_name.lower() for hint in [service, service.replace("_", "")]):
                         prefixes[service] = prefix
-    except Exception:
-        pass
+            for entry in allowed:
+                if not entry.startswith("mcp__"):
+                    continue
+                parts = entry.split("__", 2)
+                if len(parts) < 3:
+                    continue
+                prefix = f"mcp__{parts[1]}__"
+                tool   = parts[2]
+                for service, tool_hints in KNOWN_SERVICES.items():
+                    if any(hint in tool for hint in tool_hints):
+                        if service not in prefixes:
+                            prefixes[service] = prefix
+        except Exception:
+            pass
     # Non-UUID services use their name directly
     for svc in ["granola", "scheduled-tasks", "ccd_session"]:
         prefixes[svc] = f"mcp__{svc}__"
