@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alfred — {{DATE_DISPLAY}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --yellow:  #FFE000;
+    --blue:    #0038C0;
+    --red:     #E8002D;
+    --green:   #00A550;
+    --purple:  #8800CC;
+    --orange:  #FF6B00;
+    --black:   #0A0A0A;
+    --white:   #FFFFFF;
+    --cream:   #FFFDE8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Comic Neue', 'Comic Sans MS', cursive, sans-serif;
+    background-color: var(--cream);
+    background-image: radial-gradient(circle, rgba(0,0,0,0.07) 1.2px, transparent 1.2px);
+    background-size: 14px 14px;
+    color: var(--black);
+    font-size: 14px; line-height: 1.65;
+    padding: 36px 16px 100px;
+    padding-top: 76px;
+  }
+
+  .container { max-width: 720px; margin: 0 auto; position: relative; z-index: 1; }
+
+
+  /* ── Sticky bar ──────────────────────────────────────────────────── */
+  .sticky-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: var(--yellow);
+    border-bottom: 4px solid var(--black);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px; height: 52px;
+  }
+  .bar-brand {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'Bangers', cursive;
+    font-size: 26px; letter-spacing: 0.06em; color: var(--black);
+  }
+  .bar-center { display: flex; align-items: center; gap: 10px; }
+  .bar-fire-badge {
+    font-family: 'Bangers', cursive;
+    font-size: 16px; letter-spacing: 0.06em;
+    color: #fff; padding: 2px 12px;
+    border: 2px solid var(--black);
+    box-shadow: 3px 3px 0 var(--black);
+  }
+  .state-fire  .bar-fire-badge { background: var(--red); }
+  .state-clear .bar-fire-badge { background: var(--green); }
+  .bar-top-fire {
+    font-size: 12px; font-weight: 700; color: var(--black);
+    max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .bar-right { display: flex; align-items: center; gap: 10px; }
+  .bar-age { font-size: 11px; font-weight: 600; color: rgba(0,0,0,0.45); white-space: nowrap; }
+  .bar-days-badge {
+    font-family: 'Bangers', cursive; font-size: 15px; letter-spacing: 0.04em;
+    background: var(--blue); color: #fff;
+    padding: 2px 12px; border: 2px solid var(--black); box-shadow: 3px 3px 0 var(--black);
+  }
+  .run-now-btn {
+    font-family: 'Bangers', cursive; font-size: 14px; letter-spacing: 0.06em;
+    background: var(--green); color: #fff;
+    border: 2px solid var(--black); box-shadow: 3px 3px 0 var(--black);
+    padding: 2px 12px; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .run-now-btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--black); }
+  .run-now-tip {
+    font-family: 'Comic Neue', cursive; font-size: 11px; font-weight: 700;
+    background: var(--black); color: var(--yellow);
+    padding: 3px 8px; border-radius: 3px;
+    display: none; white-space: nowrap;
+  }
+  .expand-all-btn {
+    font-family: 'Bangers', cursive; font-size: 14px; letter-spacing: 0.06em;
+    background: var(--white); color: var(--black);
+    border: 2px solid var(--black); box-shadow: 3px 3px 0 var(--black);
+    padding: 2px 12px; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .expand-all-btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--black); }
+
+  /* ── Page header ─────────────────────────────────────────────────── */
+  .header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 14px; padding-bottom: 16px;
+    border-bottom: 4px solid var(--black);
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header h1 {
+    font-family: 'Bangers', cursive;
+    font-size: 54px; letter-spacing: 0.04em; color: var(--black); line-height: 1;
+    text-shadow: 4px 4px 0 var(--yellow), 6px 6px 0 var(--black);
+  }
+  .header .date {
+    font-family: 'Bangers', cursive; font-size: 15px; letter-spacing: 0.06em;
+    background: var(--blue); color: #fff;
+    padding: 4px 14px; border: 2px solid var(--black); box-shadow: 3px 3px 0 var(--black);
+    white-space: nowrap; margin-top: 10px;
+  }
+
+  /* Batman logo SVG in header */
+  .bat-logo {
+    width: 80px; height: 44px; flex-shrink: 0;
+    filter: drop-shadow(3px 3px 0 var(--black));
+  }
+
+  /* ── Speech bubble ───────────────────────────────────────────────── */
+  .speech-bubble {
+    display: inline-block; background: var(--white);
+    border: 3px solid var(--black); border-radius: 18px;
+    padding: 7px 18px; font-family: 'Bangers', cursive;
+    font-size: 20px; letter-spacing: 0.05em;
+    position: relative; margin-bottom: 22px;
+    box-shadow: 3px 3px 0 var(--black);
+  }
+  .speech-bubble::after {
+    content: ''; position: absolute;
+    bottom: -15px; left: 28px;
+    border-left: 10px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 15px solid var(--black);
+  }
+  .speech-bubble::before {
+    content: ''; position: absolute;
+    bottom: -10px; left: 30px;
+    border-left: 8px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 12px solid var(--white);
+    z-index: 1;
+  }
+
+  /* ── Data status ─────────────────────────────────────────────────── */
+  .data-status {
+    font-size: 11px; font-weight: 700;
+    margin-bottom: 30px; display: flex; gap: 6px; flex-wrap: wrap;
+  }
+  .data-status span {
+    background: var(--white); border: 2px solid var(--black);
+    padding: 2px 8px; box-shadow: 2px 2px 0 var(--black);
+  }
+
+  /* ── Section titles with batarang ────────────────────────────────── */
+  section { margin-bottom: 32px; }
+
+  .section-title {
+    font-family: 'Bangers', cursive;
+    font-size: 22px; letter-spacing: 0.08em; color: var(--black);
+    background: var(--yellow); border: 3px solid var(--black);
+    box-shadow: 4px 4px 0 var(--black);
+    padding: 5px 14px; margin-bottom: 14px;
+    display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer; user-select: none;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .section-title:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--black); }
+
+  .section-chevron {
+    display: inline-block;
+    font-size: 16px; line-height: 1;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+  }
+  .section-title.collapsed .section-chevron {
+    transform: rotate(-90deg);
+  }
+
+  .section-body.collapsed { display: none; }
+
+  /* ── Cards ───────────────────────────────────────────────────────── */
+  .card {
+    background: var(--white); border: 3px solid var(--black);
+    box-shadow: 4px 4px 0 var(--black);
+    padding: 14px 16px; margin-bottom: 10px; font-size: 13px;
+  }
+  .card ul { padding-left: 20px; }
+  .card ul li { margin-bottom: 5px; }
+
+  /* ── Delta (since yesterday) ────────────────────────────────────── */
+  .delta-card ul { list-style: none; padding: 0; margin: 0; }
+  .delta-card li { display: flex; align-items: baseline; gap: 8px; margin-bottom: 7px; font-size: 13px; font-weight: 700; }
+  .delta-tag { font-family: 'Bangers', cursive; font-size: 10px; letter-spacing: 0.05em; padding: 1px 6px; border: 2px solid var(--black); white-space: nowrap; flex-shrink: 0; }
+  .delta-fire     { background: var(--red);    color: #fff; }
+  .delta-resolved { background: var(--green);  color: #fff; }
+  .delta-status   { background: var(--blue);   color: #fff; }
+  .delta-slip     { background: var(--yellow);  color: var(--black); }
+  .delta-other    { background: #eee;           color: var(--black); }
+
+  /* ── Fire cards ──────────────────────────────────────────────────── */
+  .fire-card {
+    background: var(--white); border: 3px solid var(--red);
+    box-shadow: 5px 5px 0 var(--black);
+    padding: 14px 16px; margin-bottom: 18px; position: relative; margin-top: 14px;
+  }
+  .fire-card::before {
+    content: '💥'; position: absolute;
+    top: -20px; right: 10px; font-size: 38px; line-height: 1;
+  }
+  .fire-card .fire-title {
+    font-family: 'Bangers', cursive; font-size: 19px; letter-spacing: 0.04em;
+    color: var(--red); margin-bottom: 6px;
+  }
+  .fire-card .fire-body { font-size: 13px; font-weight: 700; }
+  .fire-card .first-move {
+    margin-top: 10px; font-size: 12px; font-weight: 700;
+    background: var(--yellow); border: 2px solid var(--black);
+    padding: 6px 10px; box-shadow: 2px 2px 0 var(--black);
+  }
+  .fire-card .first-move strong { color: var(--red); }
+
+  .resolved-card {
+    background: #f0fff4; border: 3px solid var(--green);
+    box-shadow: 4px 4px 0 var(--black);
+    padding: 12px 16px; margin-bottom: 10px;
+    font-size: 13px; font-weight: 700; color: var(--green);
+  }
+
+  /* ── Coach card ──────────────────────────────────────────────────── */
+  .coach-card {
+    background: var(--white); border: 3px solid var(--purple);
+    box-shadow: 4px 4px 0 var(--black);
+    padding: 14px 16px; font-size: 13px; font-weight: 700;
+    line-height: 1.7; position: relative; margin-top: 12px;
+  }
+  .coach-card::before {
+    content: '🦇'; position: absolute; top: -18px; right: 12px; font-size: 30px;
+  }
+
+  /* ── Calendar ────────────────────────────────────────────────────── */
+  .cal-table {
+    width: 100%; border-collapse: collapse;
+    background: var(--white); border: 3px solid var(--black);
+    box-shadow: 4px 4px 0 var(--black);
+  }
+  .cal-table thead tr { background: var(--blue); }
+  .cal-table th {
+    font-family: 'Bangers', cursive; font-size: 14px; letter-spacing: 0.1em;
+    color: #fff; padding: 8px 12px; text-align: left;
+  }
+  .cal-table td {
+    padding: 9px 12px; font-size: 13px; font-weight: 700;
+    border-top: 2px solid var(--black); vertical-align: top;
+  }
+  .cal-table .time { color: var(--blue); white-space: nowrap; }
+  .cal-table .done-row td { color: #888; }
+  .cal-table .done-row .meeting-name { text-decoration: line-through; }
+  .cal-table .conflict { color: var(--red); }
+  .cal-table .note { font-size: 12px; color: #555; margin-top: 3px; font-weight: 400; }
+  .cal-table .note.green { color: var(--green); font-weight: 700; }
+  .cal-notices { margin-top: 10px; font-size: 12px; font-weight: 700; }
+  .cal-notices span { display: block; margin-bottom: 3px; }
+
+  /* ── Pills ───────────────────────────────────────────────────────── */
+  .pill {
+    display: inline-block; font-family: 'Bangers', cursive;
+    font-size: 12px; letter-spacing: 0.06em;
+    padding: 1px 8px; margin-right: 5px; vertical-align: middle;
+    border: 2px solid var(--black); box-shadow: 2px 2px 0 var(--black);
+  }
+  .pill-red    { background: var(--red);    color: #fff; }
+  .pill-yellow { background: var(--yellow); color: var(--black); }
+  .pill-green  { background: var(--green);  color: #fff; }
+  .pill-blue   { background: var(--blue);   color: #fff; }
+  .pill-gray   { background: #ccc;          color: var(--black); }
+
+  /* ── Threads ─────────────────────────────────────────────────────── */
+  .thread-item {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 10px 0; border-top: 2px solid var(--black); font-size: 13px; font-weight: 700;
+  }
+  .thread-item:first-child { border-top: none; padding-top: 0; }
+  .thread-body { flex: 1; }
+  .thread-link { flex-shrink: 0; margin-left: 12px; }
+  .thread-link a {
+    font-family: 'Bangers', cursive; font-size: 13px; letter-spacing: 0.06em;
+    background: var(--blue); color: #fff;
+    border: 2px solid var(--black); box-shadow: 2px 2px 0 var(--black);
+    padding: 3px 10px; text-decoration: none; white-space: nowrap; display: inline-block;
+    transition: transform 0.1s;
+  }
+  .thread-link a:hover { background: var(--yellow); color: var(--black); transform: translate(-1px,-1px); }
+  .drafted { font-family: 'Bangers', cursive; font-size: 13px; letter-spacing: 0.04em; color: var(--purple); margin-top: 4px; }
+
+  /* ── Team ────────────────────────────────────────────────────────── */
+  .team-person { margin-bottom: 18px; }
+  .team-person:last-child { margin-bottom: 0; }
+  .team-person .person-name {
+    font-family: 'Bangers', cursive; font-size: 18px; letter-spacing: 0.06em;
+    color: var(--black); background: var(--yellow);
+    display: inline-block; padding: 2px 10px; margin-bottom: 8px;
+    border: 2px solid var(--black); box-shadow: 3px 3px 0 var(--black);
+  }
+  .team-item { display: flex; align-items: baseline; gap: 8px; margin-bottom: 5px; font-size: 13px; font-weight: 700; }
+
+  /* ── Signals ─────────────────────────────────────────────────────── */
+  .signal-card {
+    background: var(--white); border: 3px solid var(--black);
+    box-shadow: 4px 4px 0 var(--black);
+    padding: 12px 16px; margin-bottom: 10px;
+    font-size: 13px; font-weight: 700; display: flex; gap: 12px; align-items: flex-start;
+  }
+  .signal-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+  .signal-title { font-family: 'Bangers', cursive; font-size: 17px; letter-spacing: 0.04em; margin-bottom: 4px; }
+
+  /* ── Drive ───────────────────────────────────────────────────────── */
+  .drive-item { padding: 10px 0; border-top: 2px solid var(--black); font-size: 13px; font-weight: 700; }
+  .drive-item:first-child { border-top: none; padding-top: 0; }
+  .drive-item .doc-title { margin-bottom: 3px; }
+  .drive-item .doc-meta  { font-size: 12px; font-weight: 400; color: #555; }
+
+  /* ── Metrics ─────────────────────────────────────────────────────── */
+  .metrics-card {
+    background: var(--white); border: 3px solid var(--black);
+    box-shadow: 4px 4px 0 var(--black);
+    padding: 20px 24px; display: flex; gap: 32px; align-items: center;
+  }
+  .metric { text-align: center; }
+  .metric .metric-number {
+    font-family: 'Bangers', cursive; font-size: 80px; line-height: 1;
+    color: var(--blue); text-shadow: 5px 5px 0 var(--yellow), 7px 7px 0 var(--black);
+  }
+  .metric .label {
+    font-family: 'Bangers', cursive; font-size: 14px; letter-spacing: 0.08em; margin-top: 4px;
+  }
+  .metric-body { font-size: 13px; font-weight: 700; flex: 1; line-height: 1.7; }
+
+  /* ── Jira ────────────────────────────────────────────────────────── */
+  .jira-subsection { margin-bottom: 16px; }
+  .jira-subsection-title {
+    font-family: 'Bangers', cursive; font-size: 17px; letter-spacing: 0.08em; margin-bottom: 8px;
+  }
+  .jira-ticket {
+    background: var(--white); border: 2px solid var(--black);
+    box-shadow: 3px 3px 0 var(--black); padding: 11px 14px; margin-bottom: 8px; font-size: 13px;
+  }
+  .jira-ticket .ticket-title { font-weight: 700; margin-bottom: 4px; }
+  .jira-ticket .ticket-desc  { font-size: 12px; color: #555; line-height: 1.55; }
+  .jira-create   { border-left: 5px solid var(--orange); }
+  .jira-progress { border-left: 5px solid var(--blue); }
+  .jira-done     { border-left: 5px solid var(--green); }
+
+  a { color: var(--blue); font-weight: 700; text-decoration: none; }
+  a:hover { color: var(--red); text-decoration: underline; }
+
+  /* ── Yesterday recap ─────────────────────────────────────────────────── */
+  .yesterday-group { margin-bottom: 10px; }
+  .yesterday-group:last-child { margin-bottom: 0; }
+  .yesterday-label {
+    font-family: 'Bangers', cursive; font-size: 13px; letter-spacing: 0.07em;
+    background: var(--cream); border: 2px solid var(--black);
+    padding: 1px 8px; display: inline-block; margin-bottom: 4px;
+  }
+  .yesterday-list { padding-left: 18px; margin: 0; }
+  .yesterday-list li { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+
+  /* ── Notepad (floating left panel) ──────────────────────────────────── */
+  .notepad-float {
+    position: fixed;
+    top: 60px; left: 8px;
+    width: calc(50vw - 378px);
+    min-width: 160px; max-width: 300px;
+    height: calc(100vh - 72px);
+    background: var(--white);
+    border: 3px solid var(--black);
+    box-shadow: 4px 4px 0 var(--black);
+    display: flex; flex-direction: column;
+    z-index: 50; overflow: hidden;
+  }
+  @media (max-width: 900px) { .notepad-float { display: none; } }
+
+  .np-header {
+    background: var(--yellow); border-bottom: 3px solid var(--black);
+    padding: 6px 8px; flex-shrink: 0;
+    font-family: 'Bangers', cursive; font-size: 15px; letter-spacing: 0.08em;
+  }
+  .np-tabs { display: flex; margin-top: 6px; }
+  .np-tab {
+    font-family: 'Bangers', cursive; font-size: 11px; letter-spacing: 0.04em;
+    background: rgba(0,0,0,0.12); color: var(--black);
+    border: 2px solid var(--black); padding: 2px 0; cursor: pointer; flex: 1;
+  }
+  .np-tab:first-child { border-right: none; }
+  .np-tab.active { background: var(--white); }
+
+  .np-body { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; }
+
+  /* Checklist */
+  .np-list { list-style: none; margin: 0; padding: 0; }
+  .np-row { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
+  .np-cb { width: 14px; height: 14px; flex-shrink: 0; cursor: pointer; accent-color: var(--blue); }
+  .np-txt {
+    flex: 1; border: none; outline: none; background: transparent;
+    font-size: 12px; font-family: 'Comic Neue', cursive; font-weight: 700; min-width: 0;
+  }
+  .np-txt:focus { background: #fffde0; }
+  .np-row.done .np-txt { text-decoration: line-through; color: #aaa; }
+
+  /* Sticky Notes */
+  .np-new-note-btn {
+    width: 100%; margin-bottom: 8px; flex-shrink: 0;
+    font-family: 'Bangers', cursive; font-size: 12px; letter-spacing: 0.04em;
+    background: var(--yellow); color: var(--black);
+    border: 2px solid var(--black); padding: 4px; cursor: pointer;
+  }
+  .np-stickies-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .np-sticky { position: relative; border: 2px solid var(--black); padding: 4px; }
+  .np-sticky-c0 { background: #FFE000; }
+  .np-sticky-c1 { background: #ff9eae; }
+  .np-sticky-c2 { background: #9ac8ff; }
+  .np-sticky-c3 { background: #9effb8; }
+  .np-sticky-c4 { background: #ffbb7a; }
+  .np-sticky-c5 { background: #d4a8ff; }
+
+  /* Completed this week tray */
+  .np-completed { margin-top: 10px; border-top: 2px dashed #bbb; padding-top: 6px; }
+  .np-completed-title {
+    font-family: 'Bangers', cursive; font-size: 10px; letter-spacing: 0.06em;
+    color: #999; margin-bottom: 4px;
+  }
+  .np-completed-row { display: flex; align-items: center; gap: 5px; margin-bottom: 3px; opacity: 0.6; }
+  .np-completed-cb { width: 14px; height: 14px; flex-shrink: 0; accent-color: var(--blue); }
+  .np-completed-txt { flex: 1; font-size: 11px; font-family: 'Comic Neue', cursive; font-weight: 700; text-decoration: line-through; color: #888; }
+  .np-sticky-del {
+    position: absolute; top: 2px; right: 3px;
+    font-size: 12px; color: #bbb; background: none; border: none; cursor: pointer;
+    line-height: 1; padding: 0;
+  }
+  .np-sticky-del:hover { color: var(--red); }
+  .np-sticky-ta {
+    width: 100%; border: none; outline: none; resize: none; overflow: hidden;
+    background: transparent; font-size: 11px;
+    font-family: 'Comic Neue', cursive; font-weight: 700; min-height: 60px;
+    box-sizing: border-box;
+  }
+
+  /* ── Feedback FAB + panel ────────────────────────────────────────────── */
+  .feedback-fab {
+    position: fixed; bottom: 24px; right: 24px; z-index: 200;
+    font-family: 'Bangers', cursive; font-size: 14px; letter-spacing: 0.06em;
+    background: var(--yellow); color: var(--black);
+    border: 3px solid var(--black); box-shadow: 4px 4px 0 var(--black);
+    padding: 8px 18px; cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .feedback-fab:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--black); }
+  .feedback-panel {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 199;
+    background: var(--white); border-top: 4px solid var(--black);
+    padding: 18px 24px 24px; max-height: 60vh; overflow-y: auto;
+    transform: translateY(100%); transition: transform 0.25s ease;
+  }
+  .feedback-panel.open { transform: translateY(0); }
+  .feedback-panel-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;
+  }
+  .feedback-panel-title { font-family: 'Bangers', cursive; font-size: 20px; letter-spacing: 0.06em; }
+  .feedback-close { font-size: 22px; cursor: pointer; background: none; border: none; font-weight: 900; color: var(--black); }
+  .feedback-form { display: flex; flex-direction: column; gap: 10px; max-width: 640px; }
+  .feedback-row { display: flex; gap: 10px; align-items: flex-start; }
+  .feedback-cat {
+    font-family: 'Comic Neue', cursive; font-weight: 700; font-size: 13px;
+    border: 2px solid var(--black); padding: 6px 8px; background: var(--cream);
+    box-shadow: 2px 2px 0 var(--black); flex-shrink: 0; cursor: pointer;
+  }
+  .feedback-ta {
+    flex: 1; font-family: 'Comic Neue', cursive; font-weight: 700; font-size: 13px;
+    border: 2px solid var(--black); padding: 8px 10px; background: var(--cream);
+    resize: vertical; min-height: 70px; box-shadow: 2px 2px 0 var(--black); outline: none;
+  }
+  .feedback-ta:focus { background: #fffde0; }
+  .feedback-submit {
+    font-family: 'Bangers', cursive; font-size: 15px; letter-spacing: 0.06em;
+    background: var(--red); color: #fff;
+    border: 3px solid var(--black); box-shadow: 3px 3px 0 var(--black);
+    padding: 6px 22px; cursor: pointer; align-self: flex-start;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .feedback-submit:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--black); }
+  .feedback-status { font-size: 12px; font-weight: 700; min-height: 18px; }
+  .feedback-status.ok { color: var(--green); }
+  .feedback-status.err { color: var(--red); }
+  .feedback-history { margin-top: 14px; font-size: 12px; }
+  .feedback-history-ttl { font-family: 'Bangers', cursive; font-size: 14px; letter-spacing: 0.04em; margin-bottom: 6px; color: #555; }
+  .feedback-history-item { padding: 4px 0; border-top: 1px solid #ddd; color: #555; }
+</style>
+</head>
+<body>
+
+
+<!-- Sticky bar -->
+<div class="sticky-bar {{SUMMARY_BAR_STATE}}">
+  <div class="bar-brand">
+    <img src="{{BAT_LOGO_PATH}}" class="bat-logo" alt="Batman logo">
+    ALFRED!
+  </div>
+  <div class="bar-center">
+    <span class="bar-fire-badge">{{SUMMARY_FIRE}}</span>
+    <span class="bar-top-fire">{{SUMMARY_TOP_FIRE}}</span>
+  </div>
+  <div class="bar-right">
+    <span class="bar-days-badge">{{SUMMARY_DAYS}} DAYS!</span>
+    <span class="bar-age" id="bar-age" title="Brief generation time"></span>
+    <button class="run-now-btn" id="run-now-btn" onclick="runNow()" title="Copy trigger command — paste into Claude Code (Cmd+N, then Cmd+V)">▶ RUN NOW</button>
+    <span class="run-now-tip" id="run-now-tip">Copied! Open Claude Code → Cmd+N → Cmd+V</span>
+    <button class="expand-all-btn" onclick="toggleAll()">EXPAND ALL!</button>
+  </div>
+</div>
+<script>
+  (function() {
+    const generatedAt = "{{GENERATED_AT}}";
+    if (!generatedAt) return;
+    const el = document.getElementById('bar-age');
+    function updateAge() {
+      const diffMs  = Date.now() - new Date(generatedAt).getTime();
+      const diffMin = Math.round(diffMs / 60000);
+      const diffHr  = Math.floor(diffMin / 60);
+      let label, stale = false;
+      if (diffMin < 2)       label = 'just now';
+      else if (diffMin < 60) label = diffMin + 'm ago';
+      else if (diffHr < 24)  { label = diffHr + 'h ago'; stale = diffHr >= 12; }
+      else                   { label = Math.floor(diffHr/24) + 'd ago'; stale = true; }
+      el.textContent = '⏱ ' + label;
+      el.style.color = stale ? 'var(--red)' : 'rgba(0,0,0,0.45)';
+      el.style.fontWeight = stale ? '900' : '600';
+    }
+    updateAge();
+    setInterval(updateAge, 60000);
+  })();
+</script>
+
+<div class="container">
+
+  <div class="header">
+    <div class="header-left">
+      <!-- Batman logo -->
+      <img src="{{BAT_LOGO_PATH}}" class="bat-logo" style="width:100px;height:55px;object-fit:contain" alt="Batman logo">
+      <h1>ALFRED!</h1>
+    </div>
+    <span class="date">{{DATE_DISPLAY}}</span>
+  </div>
+
+  <div class="speech-bubble">Your brief, sir! 🫡</div>
+  <div class="data-status">{{DATA_STATUS}}</div>
+
+  <section id="s-delta" {{DELTA_HIDDEN}}>
+    <div class="section-title">⚡ SINCE YESTERDAY <span class="section-chevron">▾</span></div>
+    <div class="section-body"><div class="card delta-card">{{DELTA_HTML}}</div></div>
+  </section>
+
+  <section id="s-yesterday" {{YESTERDAY_HIDDEN}}>
+    <div class="section-title">📅 YESTERDAY'S RECAP — {{YESTERDAY_DATE}} <span class="section-chevron">▾</span></div>
+    <div class="section-body"><div class="card">{{YESTERDAY_RECAP}}</div></div>
+  </section>
+
+  <section id="s-fires">
+    <div class="section-title">🔥 FIRES! <span class="section-chevron">▾</span></div>
+    <div class="section-body">{{FIRES}}</div>
+  </section>
+
+  <section id="s-coach">
+    <div class="section-title">🧭 COACH'S NOTE! <span class="section-chevron">▾</span></div>
+    <div class="section-body"><div class="coach-card">{{COACH_NOTE}}</div></div>
+  </section>
+
+  <section id="s-today">
+    <div class="section-title">⏰ TODAY — {{DATE_SHORT}} <span class="section-chevron">▾</span></div>
+    <div class="section-body">
+      <table class="cal-table">
+        <thead><tr><th>TIME</th><th>MEETING</th><th>NOTE</th></tr></thead>
+        <tbody>{{TODAY_ROWS}}</tbody>
+      </table>
+      <div class="cal-notices">{{TODAY_NOTICES}}</div>
+    </div>
+  </section>
+
+  <section id="s-due">
+    <div class="section-title">📋 DUE THIS WEEK! <span class="section-chevron">▾</span></div>
+    <div class="section-body"><div class="card"><ul>{{DUE_THIS_WEEK_ITEMS}}</ul></div></div>
+  </section>
+
+  <section id="s-slipped">
+    <div class="section-title">⚠️ SLIPPED! <span class="section-chevron">▾</span></div>
+    <div class="section-body"><div class="card"><ul>{{SLIPPED_ITEMS}}</ul></div></div>
+  </section>
+
+  <section id="s-threads">
+    <div class="section-title">💬 PRIORITY THREADS! <span class="section-chevron">▾</span></div>
+    <div class="section-body"><div class="card">{{PRIORITY_THREADS}}</div></div>
+  </section>
+
+  <section id="s-team">
+    <div class="section-title">🤝 TEAM COMMITMENTS! <span class="section-chevron">▾</span></div>
+    <div class="section-body"><div class="card">{{TEAM_COMMITMENTS}}</div></div>
+  </section>
+
+  <section id="s-elixir">
+    <div class="section-title">📡 ELIXIR SIGNALS! <span class="section-chevron">▾</span></div>
+    <div class="section-body">{{ELIXIR_SIGNALS}}</div>
+  </section>
+
+  <section id="s-drive">
+    <div class="section-title">📄 DRIVE @-MENTIONS! <span class="section-chevron">▾</span></div>
+    <div class="section-body"><div class="card">{{DRIVE_MENTIONS}}</div></div>
+  </section>
+
+  <section id="s-metrics">
+    <div class="section-title">📊 ROLLOUT METRICS! <span class="section-chevron">▾</span></div>
+    <div class="section-body">
+      <div class="metrics-card">
+        <div class="metric">
+          <div class="metric-number">{{ROLLOUT_DAYS}}</div>
+          <div class="label">Days to July 1!</div>
+        </div>
+        <div class="metric-body">
+          CRO directive: "60 days, everyone in revenue using Elixir!"<br>
+          {{ROLLOUT_NOTE}}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {{JIRA_SECTION}}
+
+
+</div>
+
+<!-- Floating notepad — fixed to left margin -->
+<div class="notepad-float">
+  <div class="np-header">
+    📝 NOTEPAD
+    <div class="np-tabs">
+      <button class="np-tab active" id="np-tab-check" onclick="npSwitchTab('check')">☑ Checklist</button>
+      <button class="np-tab" id="np-tab-sticky" onclick="npSwitchTab('sticky')">📌 Sticky Notes</button>
+    </div>
+  </div>
+  <div class="np-body" id="np-body-check">
+    <ul class="np-list" id="np-list"></ul>
+    <div class="np-completed" id="np-completed" style="display:none">
+      <div class="np-completed-title">✅ COMPLETED THIS WEEK</div>
+      <ul class="np-list" id="np-completed-list"></ul>
+    </div>
+  </div>
+  <div class="np-body" id="np-body-sticky" style="display:none">
+    <button class="np-new-note-btn" onclick="npAddSticky()">New Note +</button>
+    <div class="np-stickies-grid" id="np-stickies"></div>
+  </div>
+</div>
+
+<!-- Feedback FAB -->
+<button class="feedback-fab" onclick="toggleFb()">✏️ FEEDBACK</button>
+
+<!-- Feedback panel -->
+<div class="feedback-panel" id="fb-panel">
+  <div class="feedback-panel-header">
+    <span class="feedback-panel-title">📬 FEEDBACK TO ALFRED</span>
+    <button class="feedback-close" onclick="toggleFb()">✕</button>
+  </div>
+  <div class="feedback-form">
+    <div class="feedback-row">
+      <select class="feedback-cat" id="fb-cat">
+        <option>🚫 Not a fire</option>
+        <option>📌 Standing instruction</option>
+        <option>💬 Coverage gap</option>
+        <option>📝 One-off note</option>
+      </select>
+      <textarea class="feedback-ta" id="fb-ta" placeholder="Type your feedback here..."></textarea>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center">
+      <button class="feedback-submit" onclick="submitFb()">SEND TO ALFRED ↓</button>
+      <div class="feedback-status" id="fb-status"></div>
+    </div>
+    <div id="fb-history"></div>
+  </div>
+</div>
+
+<script>
+  const ALWAYS_OPEN = ['s-fires'];
+
+  document.querySelectorAll('section[id]').forEach(section => {
+    const id    = section.id;
+    const title = section.querySelector('.section-title');
+    const body  = section.querySelector('.section-body');
+    if (!title || !body) return;
+
+    const isOpen = ALWAYS_OPEN.includes(id) ? true : localStorage.getItem('alfred-collapsed-' + id) !== 'true';
+    if (!isOpen) {
+      body.classList.add('collapsed');
+      title.classList.add('collapsed');
+    }
+
+    title.addEventListener('click', () => {
+      const nowCollapsed = body.classList.toggle('collapsed');
+      title.classList.toggle('collapsed', nowCollapsed);
+      localStorage.setItem('alfred-collapsed-' + id, nowCollapsed ? 'true' : 'false');
+      updateExpandBtn();
+    });
+  });
+
+  function toggleAll() {
+    const bodies = document.querySelectorAll('section[id] .section-body');
+    const titles = document.querySelectorAll('section[id] .section-title');
+    const anyCollapsed = [...bodies].some(b => b.classList.contains('collapsed'));
+    bodies.forEach((b, i) => {
+      b.classList.toggle('collapsed', !anyCollapsed);
+      titles[i].classList.toggle('collapsed', !anyCollapsed);
+      localStorage.setItem('alfred-collapsed-' + b.closest('section').id, !anyCollapsed ? 'true' : 'false');
+    });
+    updateExpandBtn();
+  }
+
+  function runNow() {
+    const cmd = 'Read and execute the instructions in ~/.claude/scheduled-tasks/morning-brief/SKILL.md';
+    navigator.clipboard.writeText(cmd).then(() => {
+      const tip = document.getElementById('run-now-tip');
+      const btn = document.getElementById('run-now-btn');
+      tip.style.display = 'inline';
+      btn.style.opacity = '0.6';
+      setTimeout(() => { tip.style.display = 'none'; btn.style.opacity = '1'; }, 3500);
+    }).catch(() => {
+      alert('Could not copy automatically.\n\nPaste this into Claude Code:\n\n' +
+            'Read and execute the instructions in ~/.claude/scheduled-tasks/morning-brief/SKILL.md');
+    });
+  }
+
+  function updateExpandBtn() {
+    const btn = document.querySelector('.expand-all-btn');
+    if (!btn) return;
+    const anyCollapsed = [...document.querySelectorAll('section[id] .section-body')]
+      .some(b => b.classList.contains('collapsed'));
+    btn.textContent = anyCollapsed ? 'EXPAND ALL!' : 'COLLAPSE ALL!';
+  }
+
+  updateExpandBtn();
+
+  // ── Notepad ────────────────────────────────────────────────────────────
+  const NP_KEY = 'alfred-notepad-v3';
+
+  function npLoad() {
+    try { return JSON.parse(localStorage.getItem(NP_KEY) || '{}'); } catch { return {}; }
+  }
+  function npSaveData(data) { localStorage.setItem(NP_KEY, JSON.stringify(data)); }
+  function npWeekKey() {
+    const d = new Date(), jan1 = new Date(d.getFullYear(), 0, 1);
+    return d.getFullYear() + '-W' + Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+  }
+  function npData() {
+    const d = npLoad();
+    if (!Array.isArray(d.checklist)) d.checklist = [];
+    if (!Array.isArray(d.stickies))  d.stickies  = [];
+    if (!d.completed || d.completed.week !== npWeekKey()) d.completed = { week: npWeekKey(), items: [] };
+    return d;
+  }
+
+  // ── Tab switching ────────────────────────────────────────────────────
+  function npSwitchTab(tab) {
+    document.getElementById('np-body-check').style.display  = tab === 'check'  ? '' : 'none';
+    document.getElementById('np-body-sticky').style.display = tab === 'sticky' ? '' : 'none';
+    document.getElementById('np-tab-check').classList.toggle('active',  tab === 'check');
+    document.getElementById('np-tab-sticky').classList.toggle('active', tab === 'sticky');
+  }
+
+  // ── Checklist ────────────────────────────────────────────────────────
+  function npRenderList() {
+    const d  = npData();
+    const ul = document.getElementById('np-list');
+    ul.innerHTML = '';
+    if (!d.checklist.length) d.checklist.push({ text: '', done: false });
+    d.checklist.forEach((item, i) => ul.appendChild(npMakeRow(item, i)));
+    npRenderCompleted();
+  }
+
+  function npRenderCompleted() {
+    const d    = npData();
+    const sec  = document.getElementById('np-completed');
+    const list = document.getElementById('np-completed-list');
+    const items = d.completed.items;
+    if (!items.length) { sec.style.display = 'none'; return; }
+    sec.style.display = '';
+    list.innerHTML = '';
+    items.forEach(text => {
+      const li  = document.createElement('li');
+      li.className = 'np-completed-row';
+      const cb  = document.createElement('input');
+      cb.type = 'checkbox'; cb.checked = true; cb.className = 'np-completed-cb';
+      cb.addEventListener('change', () => {
+        const d2 = npData();
+        const i  = d2.completed.items.indexOf(text);
+        if (i !== -1) d2.completed.items.splice(i, 1);
+        d2.checklist.push({ text, done: false });
+        npSaveData(d2); npRenderList();
+      });
+      const span = document.createElement('span');
+      span.className = 'np-completed-txt'; span.textContent = text;
+      li.appendChild(cb); li.appendChild(span);
+      list.appendChild(li);
+    });
+  }
+
+  function npMakeRow(item, idx) {
+    const li  = document.createElement('li');
+    li.className = 'np-row';
+
+    const cb  = document.createElement('input');
+    cb.type   = 'checkbox';
+    cb.className = 'np-cb';
+    cb.checked = false;
+    cb.addEventListener('change', () => {
+      if (!cb.checked) return;
+      const d2 = npData();
+      const text = d2.checklist[idx]?.text || '';
+      d2.checklist.splice(idx, 1);
+      if (text) d2.completed.items.unshift(text);
+      npSaveData(d2); npRenderList();
+    });
+
+    const inp = document.createElement('input');
+    inp.type  = 'text';
+    inp.className = 'np-txt';
+    inp.value = item.text || '';
+    inp.placeholder = idx === 0 ? 'Add item…' : '';
+    inp.addEventListener('input', () => {
+      const d2 = npData();
+      if (d2.checklist[idx] !== undefined) { d2.checklist[idx].text = inp.value; npSaveData(d2); }
+    });
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const d2 = npData();
+        d2.checklist.splice(idx + 1, 0, { text: '', done: false });
+        npSaveData(d2);
+        npRenderList();
+        const rows = document.querySelectorAll('.np-txt');
+        if (rows[idx + 1]) rows[idx + 1].focus();
+      } else if (e.key === 'Backspace' && inp.value === '' && idx > 0) {
+        e.preventDefault();
+        const d2 = npData();
+        d2.checklist.splice(idx, 1);
+        npSaveData(d2);
+        npRenderList();
+        const rows = document.querySelectorAll('.np-txt');
+        if (rows[idx - 1]) rows[idx - 1].focus();
+      }
+    });
+
+    li.appendChild(cb);
+    li.appendChild(inp);
+    return li;
+  }
+  npRenderList();
+
+  // ── Sticky Notes ─────────────────────────────────────────────────────
+  function npRenderStickies() {
+    const d    = npData();
+    const grid = document.getElementById('np-stickies');
+    grid.innerHTML = '';
+    d.stickies.forEach((text, i) => grid.appendChild(npMakeSticky(text, i)));
+  }
+
+  const NP_STICKY_COLORS = 6;
+  function npMakeSticky(text, idx) {
+    const card = document.createElement('div');
+    card.className = `np-sticky np-sticky-c${idx % NP_STICKY_COLORS}`;
+
+    const del = document.createElement('button');
+    del.className   = 'np-sticky-del';
+    del.textContent = '×';
+    del.title = 'Delete';
+    del.onclick = () => {
+      const d = npData(); d.stickies.splice(idx, 1); npSaveData(d); npRenderStickies();
+    };
+
+    const ta = document.createElement('textarea');
+    ta.className   = 'np-sticky-ta';
+    ta.value       = text || '';
+    ta.placeholder = 'Note…';
+    ta.addEventListener('input', () => {
+      ta.style.height = 'auto';
+      ta.style.height = ta.scrollHeight + 'px';
+      const d = npData();
+      d.stickies[idx] = ta.value;
+      npSaveData(d);
+    });
+    setTimeout(() => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }, 0);
+
+    card.appendChild(del);
+    card.appendChild(ta);
+    return card;
+  }
+
+  function npAddSticky() {
+    const d = npData(); d.stickies.push(''); npSaveData(d); npRenderStickies();
+    const tas = document.querySelectorAll('.np-sticky-ta');
+    if (tas.length) tas[tas.length - 1].focus();
+  }
+  npRenderStickies();
+
+
+  // ── Feedback ───────────────────────────────────────────────────────────
+  function toggleFb() {
+    const p = document.getElementById('fb-panel');
+    p.classList.toggle('open');
+    if (p.classList.contains('open')) renderFbHistory();
+  }
+  function renderFbHistory() {
+    const hist = JSON.parse(localStorage.getItem('alfred-feedback-history') || '[]');
+    const el   = document.getElementById('fb-history');
+    if (!hist.length) { el.innerHTML = ''; return; }
+    el.innerHTML = '<div class="feedback-history-ttl">RECENT FEEDBACK</div>' +
+      hist.map(h => `<div class="feedback-history-item">${npEsc(h.category)} — ${npEsc(h.text)}</div>`).join('');
+  }
+  function submitFb() {
+    const cat  = document.getElementById('fb-cat').value;
+    const text = document.getElementById('fb-ta').value.trim();
+    if (!text) { setFbStatus('err','Type some feedback first.'); return; }
+
+    const ts    = new Date().toISOString();
+    const entry = `[${ts}]\nCategory: ${cat}\n${text}\n\n---\n\n`;
+
+    const blob = new Blob([entry], { type: 'text/plain' });
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement('a'), { href: url, download: 'alfred-pending-feedback.txt' });
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+
+    const hist = JSON.parse(localStorage.getItem('alfred-feedback-history') || '[]');
+    hist.unshift({ category: cat, text: text.slice(0,120), ts });
+    localStorage.setItem('alfred-feedback-history', JSON.stringify(hist.slice(0,5)));
+
+    document.getElementById('fb-ta').value = '';
+    setFbStatus('ok','✅ Downloaded — Alfred picks it up on next brief run.');
+    renderFbHistory();
+  }
+  function setFbStatus(type, msg) {
+    const el = document.getElementById('fb-status');
+    el.textContent = msg; el.className = 'feedback-status ' + type;
+    if (type === 'ok') setTimeout(() => { el.textContent = ''; el.className = 'feedback-status'; }, 5000);
+  }
+</script>
+
+<!-- Keep-open footer -->
+<div style="margin-top:48px; padding:10px 16px; border:2px solid var(--black); background:var(--white); box-shadow:3px 3px 0 var(--black); font-size:11px; font-weight:700; color:#555; text-align:center;">
+  🦇 Alfred runs inside <strong>Claude Code</strong> — keep it open in the background for scheduled briefs. &nbsp;|&nbsp; Notepad requires Chrome. &nbsp;|&nbsp; <a href="https://github.com/ellippma/Alfred" target="_blank" style="color:var(--blue);">ellippma/Alfred</a>
+</div>
+</body>
+</html>

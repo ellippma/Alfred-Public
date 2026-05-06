@@ -1,0 +1,15 @@
+---
+name: Fire calibrations
+description: Permanent "not a fire" rules learned from {{USER_NAME}}'s feedback. Append-only.
+type: feedback
+---
+
+# Not-a-fire rules
+
+<!-- Alfred appends rules here as {{USER_NAME}} provides feedback. -->
+<!-- Format: - {situation description} is NOT a fire because {reason} -->
+
+<!-- Example entries added by Alfred over time:
+- Routine vendor check-in emails are NOT fires even if from a priority sender
+- Missing a low-priority Slack reply over the weekend is NOT a fire
+-->

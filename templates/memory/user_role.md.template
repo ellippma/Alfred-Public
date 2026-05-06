@@ -1,0 +1,20 @@
+---
+name: User role and mission
+description: {{USER_NAME}}'s role, mission, and working style at {{COMPANY}}.
+type: user
+---
+
+{{USER_NAME}} is {{USER_ROLE}} at {{COMPANY}}.
+
+**Reports to:** {{MANAGER_NAME}} ({{MANAGER_TITLE}})
+**Mission:** {{USER_MISSION}}
+**Email:** {{USER_EMAIL}}
+**Slack ID:** {{SLACK_USER_ID}}
+
+**Working style:**
+- Prefers direct, no-filler communication
+- Delegates formatting/synthesis to Alfred; focuses on decisions and relationships
+- High volume of async Slack communication; some email
+
+**Signal filter for Slack listening:**
+{{SLACK_SIGNAL_FILTER}}

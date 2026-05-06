@@ -1,0 +1,33 @@
+---
+name: Stakeholders and how to relate
+description: {{USER_NAME}}'s leadership chain, priority responders, and team.
+type: user
+---
+
+# Tier 1 — Always respond immediately (fire definition anchors here)
+
+- **{{TIER1_NAME_1}}** — {{TIER1_TITLE_1}}. {{TIER1_NOTE_1}}
+- **{{TIER1_NAME_2}}** — {{TIER1_TITLE_2}}. {{TIER1_NOTE_2}}
+
+# Manager
+
+- **{{MANAGER_NAME}}** — {{MANAGER_TITLE}}. {{MANAGER_NOTE}}
+
+# No-fly list (never auto-book calendar invites)
+
+- {{TIER1_NAME_1}}
+- {{NOFLY_2}}
+- {{NOFLY_3}}
+All C-suite go through their EAs.
+
+# Direct reports / key peers
+
+- **{{DIRECT_REPORT_1}}** — {{DIRECT_REPORT_1_TITLE}}. Track commitments closely.
+- **{{DIRECT_REPORT_2}}** — {{DIRECT_REPORT_2_TITLE}}. Track commitments closely.
+
+# Director+ rule
+
+Any VP, SVP, C-suite, or named Tier 1 stakeholder gets:
+- Same-day response to unresponded threads
+- Pre-meeting brief if meeting is within 15 min
+- Explicit status in team commitments section

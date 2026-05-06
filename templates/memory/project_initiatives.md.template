@@ -1,0 +1,15 @@
+---
+name: Current initiatives
+description: {{USER_NAME}}'s active projects and Q-level priorities. Alfred anchors weekly digests here.
+type: project
+---
+
+# {{CURRENT_QUARTER}} Priorities
+
+{{USER_NAME}}'s top initiative this quarter:
+
+1. **{{INITIATIVE_1_NAME}}** — {{INITIATIVE_1_DESC}}
+   - Success metric: {{INITIATIVE_1_METRIC}}
+   - Target date: {{INITIATIVE_1_DATE}}
+
+<!-- Alfred adds additional initiatives here as they're identified. You can also add them directly. -->

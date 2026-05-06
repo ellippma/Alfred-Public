@@ -1,0 +1,17 @@
+# Personal data — never commit these (top-level only, not templates/)
+/memory/
+/brain/
+
+# Generated files — per-user, not shareable
+setup/complete-setup-prompt.txt
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Run log contains personal brief data — keep local only
+alfred-run-log.md
