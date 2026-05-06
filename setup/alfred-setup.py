@@ -276,19 +276,14 @@ def detect_mcps(config):
             req = "(REQUIRED)" if svc in ("slack", "calendar") else "(recommended)"
             print(f"    ⚠️   {label} — not detected {req}")
 
-    # Block if required tools are missing
+    # Warn but don't block — UI-connected MCPs may not be auto-detectable
     missing_required = [s for s in ("slack", "calendar") if s not in prefixes]
     if missing_required:
         print(f"""
-  ❌  SETUP CANNOT CONTINUE — required MCP tools not detected:
-      {', '.join(service_display[s] for s in missing_required)}
-
-  To connect them:
-  1. Open Claude Code settings (gear icon or /settings)
-  2. Go to MCP Servers and connect the missing tools
-  3. Re-run this wizard: python3 {__file__}
+  ⚠️   Could not auto-detect: {', '.join(service_display[s] for s in missing_required)}
+  If they're connected in Claude Code (green dot), this is fine — continuing.
+  Alfred will use placeholder IDs that Claude Code will resolve at runtime.
 """)
-        sys.exit(1)
 
     # Inject prefixes into config
     config["MCP_SLACK"]    = prefixes.get("slack",    "mcp__REPLACE_SLACK_ID__")
