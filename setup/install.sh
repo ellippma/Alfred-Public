@@ -77,5 +77,5 @@ fi
 
 echo ""
 
-# ── Run setup wizard ──────────────────────────────────────────────────────────
-exec python3 "$INSTALL_DIR/setup/alfred-setup.py"
+# ── Run setup wizard (browser UI) ────────────────────────────────────────────
+exec python3 "$INSTALL_DIR/setup/alfred-setup-ui.py"
