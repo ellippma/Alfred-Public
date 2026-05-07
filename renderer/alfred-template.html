@@ -825,6 +825,8 @@
   </div>
 </div>
 
+<script id="mp-data" type="application/json">{{MILESTONES_JSON}}</script>
+
 <!-- Milestone management FAB -->
 <button class="milestone-fab" onclick="toggleMp()">🏁 MILESTONES</button>
 
@@ -1124,7 +1126,7 @@
 
   // ── Milestone management ────────────────────────────────────────────────
   var mpMilestones = (function() {
-    try { return JSON.parse('{{MILESTONES_JSON}}') || []; } catch(e) { return []; }
+    try { return JSON.parse(document.getElementById('mp-data').textContent) || []; } catch(e) { return []; }
   })();
 
   function toggleMp() {

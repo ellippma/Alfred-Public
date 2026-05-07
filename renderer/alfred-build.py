@@ -265,10 +265,14 @@ def _check_update():
     try:
         cfg_path = Path.home() / ".alfred-config.json"
         installed = "0.0.0"
+        repo_dir = Path.home() / "alfred-repo"
         if cfg_path.exists():
             d = json.loads(cfg_path.read_text())
             installed = d.get("version", "0.0.0")
-        repo_ver_path = Path.home() / "alfred-repo" / "VERSION"
+            configured = d.get("paths", {}).get("repo_dir")
+            if configured:
+                repo_dir = Path(configured)
+        repo_ver_path = repo_dir / "VERSION"
         if repo_ver_path.exists():
             latest = repo_ver_path.read_text().strip()
         else:
@@ -351,7 +355,7 @@ def build():
     milestones = data.get("milestones", [])
     milestones_html = r_milestones(milestones)
     milestones_hidden = "" if milestones_html else 'style="display:none"'
-    milestones_json = json.dumps(milestones)
+    milestones_json = json.dumps(milestones).replace("</", "<\\/")
 
     update_avail, latest_ver = _check_update()
     # Alfred may also pass update info via alfred-data.json (from SKILL.md version check)
