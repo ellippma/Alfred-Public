@@ -32,6 +32,13 @@ ALFRED_TOOLS = {
     "granola":  ["list_meetings", "query_granola_meetings"],
 }
 FIXED_PERMISSIONS = [
+    # Built-in tool wildcards — Alfred needs full autonomy, no per-call prompts
+    "Bash(*)",
+    "Read(*)",
+    "Write(*)",
+    "Edit(*)",
+    "Glob(*)",
+    "Grep(*)",
     "mcp__granola__list_meetings",
     "mcp__granola__query_granola_meetings",
     "mcp__scheduled-tasks__create_scheduled_task",
