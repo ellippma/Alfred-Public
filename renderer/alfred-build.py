@@ -2,7 +2,7 @@
 """
 alfred-build.py
 Reads alfred-data.json → fills alfred-template.html → writes alfred-brief-YYYY-MM-DD.html
-Usage: python3 ~/Documents/COS\ Briefs/alfred-build.py
+Usage: python3 alfred-build.py  (run from your briefs directory, or set ALFRED_BRIEFS_DIR)
 """
 
 import json, os, sys
@@ -83,14 +83,14 @@ def r_data_status(sources):
 def r_fires(fires, resolved):
     html = ""
     for f in resolved:
-        html += f'<div class="resolved-card"><strong>✅ RESOLVED — {esc(f["title"])}</strong> — {esc(f["note"])}</div>\n'
+        html += f'<div class="resolved-card"><strong>✅ RESOLVED — {esc(f.get("title",""))}</strong> — {esc(f.get("note",""))}</div>\n'
     for f in fires:
         link = f' <a href="{f["slack_url"]}" target="_blank">Open thread →</a>' if f.get("slack_url") else ""
         html += (
             f'<div class="fire-card">'
-            f'<div class="fire-title">{esc(f["title"])}</div>'
-            f'<div class="fire-body">{esc(f["body"])}{link}</div>'
-            f'<div class="first-move"><strong>First move:</strong> {esc(f["first_move"])}</div>'
+            f'<div class="fire-title">{esc(f.get("title",""))}</div>'
+            f'<div class="fire-body">{esc(f.get("body",""))}{link}</div>'
+            f'<div class="first-move"><strong>First move:</strong> {esc(f.get("first_move",""))}</div>'
             f'</div>\n'
         )
     return html or "<p style='color:#6e6e73;font-size:13px'>No fires. Good morning.</p>"
@@ -104,8 +104,8 @@ def r_calendar_rows(events):
         row_cls  = ' class="done-row"' if done else ""
         name_cls = ' class="meeting-name"' if done else ""
         col_cls  = ' class="conflict"' if conflict else ""
-        time_str = esc(e["time"]) + (" ⚠️" if conflict else "")
-        title    = f"<strong>{esc(e['title'])}</strong>" if priority else esc(e["title"])
+        time_str = esc(e.get("time","")) + (" ⚠️" if conflict else "")
+        title    = f"<strong>{esc(e.get('title',''))}</strong>" if priority else esc(e.get("title",""))
         note_cls = " green" if done else ""
         note_html = f'<div class="note{note_cls}">{esc(e["note"])}</div>' if e.get("note") else ""
         html += (
@@ -126,7 +126,7 @@ def r_list_items(items):
         prefix = ""
         if item.get("pill") and item.get("pill_color"):
             prefix = pill(item["pill"], PILL_CLASS.get(item["pill_color"], "pill-gray")) + " "
-        html += f"<li>{prefix}{esc(item['text'])}</li>\n"
+        html += f"<li>{prefix}{esc(item.get('text',''))}</li>\n"
     return html
 
 def r_priority_threads(threads):
@@ -136,7 +136,7 @@ def r_priority_threads(threads):
         link_btn = f'<a href="{t["slack_url"]}" target="_blank">Open in Slack →</a>' if t.get("slack_url") else ""
         html += (
             f'<div class="thread-item">'
-            f'<div class="thread-body"><strong>{esc(t["title"])}</strong> — {esc(t["body"])}{drafted}</div>'
+            f'<div class="thread-body"><strong>{esc(t.get("title",""))}</strong> — {esc(t.get("body",""))}{drafted}</div>'
             f'<div class="thread-link">{link_btn}</div>'
             f'</div>\n'
         )
@@ -146,37 +146,25 @@ def r_team_commitments(people):
     html = ""
     for person in people:
         items_html = ""
-        for item in person["items"]:
+        for item in person.get("items", []):
             cls, label = STATUS_MAP.get(item.get("status",""), ("pill-gray", item.get("status","").upper()))
-            note = f' — {esc(item["note"])}' if item.get("note") else ""
-            items_html += f'<div class="team-item">{pill(label, cls)} {esc(item["text"])}{note}</div>\n'
+            note = f' — {esc(item.get("note",""))}' if item.get("note") else ""
+            items_html += f'<div class="team-item">{pill(label, cls)} {esc(item.get("text",""))}{note}</div>\n'
         html += (
             f'<div class="team-person">'
-            f'<div class="person-name">{esc(person["person"])}</div>'
+            f'<div class="person-name">{esc(person.get("person",""))}</div>'
             f'{items_html}</div>\n'
         )
     return html
 
-def r_elixir_signals(signals):
-    html = ""
-    for s in signals:
-        icon = SIGNAL_ICONS.get(s["type"], "⚪")
-        link = f' <a href="{s["url"]}" target="_blank">{esc(s.get("url_text","View →"))}</a>' if s.get("url") else ""
-        html += (
-            f'<div class="signal-card">'
-            f'<div class="signal-icon">{icon}</div>'
-            f'<div><div class="signal-title">{esc(s["title"])}</div>{esc(s["body"])}{link}</div>'
-            f'</div>\n'
-        )
-    return html
 
 def r_drive_mentions(mentions):
     html = ""
     for m in mentions:
         html += (
             f'<div class="drive-item">'
-            f'<div class="doc-title"><a href="{m["url"]}" target="_blank">{esc(m["title"])}</a></div>'
-            f'<div class="doc-meta">Owner: {esc(m["owner"])} · {esc(m["note"])}</div>'
+            f'<div class="doc-title"><a href="{m.get("url","#")}" target="_blank">{esc(m.get("title",""))}</a></div>'
+            f'<div class="doc-meta">Owner: {esc(m.get("owner",""))} · {esc(m.get("note",""))}</div>'
             f'</div>\n'
         )
     return html
@@ -243,13 +231,13 @@ def r_milestones(milestones):
             signals_html += (
                 f'<div class="milestone-signal">'
                 f'<span class="signal-icon-sm">{icon}</span>'
-                f'{src_badge} {esc(s["text"])}{link}'
+                f'{src_badge} {esc(s.get("text",""))}{link}'
                 f'</div>\n'
             )
         html += (
             f'<div class="milestone-card">'
             f'<div class="milestone-hdr">'
-            f'<span class="milestone-name">{esc(m["name"])}</span>'
+            f'<span class="milestone-name">{esc(m.get("name",""))}</span>'
             f'<span class="milestone-badge {cls}">{label}</span>'
             f'{target}'
             f'</div>'
@@ -282,32 +270,31 @@ def _check_update():
         return False, "", Path.home() / "alfred-repo"
 
 
-def r_jira(jira):
-    if not jira:
-        return ""
-    body = ""
-    specs = [
-        ("create",      "🟠 Create",              "jira-create"),
-        ("in_progress", "🔵 Move to In Progress",  "jira-progress"),
-        ("done",        "✅ Move to Done",          "jira-done"),
-    ]
-    for key, heading, cls in specs:
-        items = jira.get(key, [])
-        if not items:
-            continue
-        tickets = ""
-        for t in items:
-            desc_key = "description" if "description" in t else "note"
-            tickets += (
-                f'<div class="jira-ticket {cls}">'
-                f'<div class="ticket-title">{esc(t["title"])}</div>'
-                f'<div class="ticket-desc">{esc(t.get(desc_key,""))}</div>'
-                f'</div>\n'
-            )
-        body += f'<div class="jira-subsection"><div class="jira-subsection-title">{heading}</div>{tickets}</div>\n'
-    if not body:
-        return ""
-    return f'<section><div class="section-title">🎫 Jira</div>{body}</section>'
+def _strftime(dt, fmt):
+    """Cross-platform strftime — replaces %-d (macOS-only) with the unpadded day number."""
+    return dt.strftime(fmt.replace("%-d", str(dt.day)))
+
+
+def _rollout_days_label():
+    """Return a short date label like 'Jul 1' from config, or 'target' as fallback."""
+    try:
+        cfg_path = Path.home() / ".alfred-config.json"
+        if cfg_path.exists():
+            d = json.loads(cfg_path.read_text())
+            date_str = d.get("template_vars", {}).get("ROLLOUT_DATE", "")
+            if date_str:
+                dt = datetime.strptime(date_str, "%Y-%m-%d")
+                return _strftime(dt, "%b %-d")
+    except Exception:
+        pass
+    return "target"
+
+
+def r_kanban_json(kanban):
+    """Serialize kanban data for the template's kb-data script tag."""
+    if not kanban:
+        kanban = {}
+    return json.dumps(kanban).replace("</", "<\\/")
 
 # ── main ──────────────────────────────────────────────────────────────────────
 
@@ -320,29 +307,43 @@ def r_summary_bar(fires, rollout_days):
         state      = "state-clear"
     elif count == 1:
         fire_label = "🔥 1 fire"
-        top_fire   = fires[0]["title"]
+        top_fire   = fires[0].get("title","")
         state      = "state-fire"
     else:
         fire_label = f"🔥 {count} fires"
-        top_fire   = fires[0]["title"]
+        top_fire   = fires[0].get("title","")
         state      = "state-fire"
     return fire_label, top_fire, str(rollout_days), state
 
 
 def build():
-    with open(TEMPLATE) as f:
-        tmpl = f.read()
-    with open(DATA_FILE) as f:
-        data = json.load(f)
+    try:
+        with open(TEMPLATE) as f:
+            tmpl = f.read()
+    except FileNotFoundError:
+        sys.exit(f"alfred-build: template not found: {TEMPLATE}\n"
+                 f"  Make sure alfred-template.html is in your briefs directory ({BRIEFS_DIR}).\n"
+                 f"  Re-run setup if it is missing: python3 ~/alfred-repo/setup/alfred-setup-ui.py")
+
+    try:
+        with open(DATA_FILE) as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        sys.exit(f"alfred-build: data file not found: {DATA_FILE}\n"
+                 f"  alfred-data.json is written by Claude during the brief run.\n"
+                 f"  Run alfred-build.py only after Claude has finished gathering data.")
+    except json.JSONDecodeError as e:
+        sys.exit(f"alfred-build: alfred-data.json is not valid JSON: {e}\n"
+                 f"  The data file may be incomplete — check that Claude finished writing it.")
 
     date_str     = data.get("date", datetime.today().strftime("%Y-%m-%d"))
     dt           = datetime.strptime(date_str, "%Y-%m-%d")
-    date_display = dt.strftime("%A, %B %-d, %Y")
-    date_short   = dt.strftime("%a %b %-d")
+    date_display = _strftime(dt, "%A, %B %-d, %Y")
+    date_short   = _strftime(dt, "%a %b %-d")
 
     fires = data.get("fires", [])
     summary_fire, summary_top_fire, summary_days, bar_state = r_summary_bar(
-        fires, data.get("rollout_days", "—")
+        fires, data.get("rollout_days") or "—"
     )
     yesterday_date, yesterday_recap, yesterday_hidden = r_yesterday_recap(data.get("yesterday_recap"))
     if yesterday_date is None:
@@ -383,11 +384,11 @@ def build():
         "SLIPPED_ITEMS":       r_list_items(data.get("slipped",[])),
         "PRIORITY_THREADS":    r_priority_threads(data.get("priority_threads",[])),
         "TEAM_COMMITMENTS":    r_team_commitments(data.get("team_commitments",[])),
-        "ELIXIR_SIGNALS":      r_elixir_signals(data.get("elixir_signals",[])),
         "DRIVE_MENTIONS":      r_drive_mentions(data.get("drive_mentions",[])),
-        "ROLLOUT_DAYS":        str(data.get("rollout_days","—")),
+        "ROLLOUT_DAYS":        str(data.get("rollout_days") or "—"),
+        "ROLLOUT_DAYS_LABEL":  _rollout_days_label(),
         "ROLLOUT_NOTE":        esc(data.get("rollout_note","")),
-        "JIRA_SECTION":        r_jira(data.get("jira")),
+        "KANBAN_JSON":          r_kanban_json(data.get("kanban")),
         "GENERATED_AT":        datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
         "DELTA_HTML":          delta_html,
         "DELTA_HIDDEN":        delta_hidden,

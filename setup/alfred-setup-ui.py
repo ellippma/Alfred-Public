@@ -60,32 +60,67 @@ TIMEZONES = [
 def claude_project_segment():
     return str(Path.home()).replace("/", "-").replace(".", "-")
 
+SVC_NAME_ALIASES = {
+    "slack":    ["slack"],
+    "gmail":    ["gmail", "google-mail", "googlemail", "google_mail"],
+    "calendar": ["calendar", "gcal", "google-calendar", "google_calendar", "googlecal", "googlecalendar"],
+    "drive":    ["drive", "gdrive", "google-drive", "google_drive", "googledrive"],
+    "granola":  ["granola"],
+}
+
+def _svc_from_aliases(text):
+    """Return the first service whose aliases appear in text (lowercased), or None."""
+    tl = text.lower()
+    for svc, aliases in SVC_NAME_ALIASES.items():
+        if any(a in tl for a in aliases):
+            return svc
+    return None
+
 def detect_mcp_ids():
     prefixes = {}
-    for sf in [CLAUDE_DIR / "settings.local.json", CLAUDE_DIR / "settings.json"]:
+    # Scan all known Claude config files that may contain mcpServers entries.
+    # Note: Claude app Connectors (Gmail, Calendar, Drive, Slack set up via
+    # Settings → Connectors) are cloud-managed and have no local config entry —
+    # they cannot be auto-detected here. The wizard UI lets users mark those manually.
+    scan_files = [
+        CLAUDE_DIR / "settings.local.json",
+        CLAUDE_DIR / "settings.json",
+        Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json",
+    ]
+    for sf in scan_files:
         if not sf.exists():
             continue
         try:
             data = json.loads(sf.read_text())
-            for name in data.get("mcpServers", {}):
+            for name, srv_cfg in data.get("mcpServers", {}).items():
                 prefix = f"mcp__{name}__"
-                for svc, hints in KNOWN_SERVICES.items():
-                    if svc not in prefixes and any(h in name.lower() for h in [svc, svc.replace("_", "")]):
+                # 1. Match on server key name (human-readable MCPs like "granola")
+                svc = _svc_from_aliases(name)
+                if svc and svc not in prefixes:
+                    prefixes[svc] = prefix
+                # 2. Match on server config values (catches MCPs with UUID keys but
+                #    recognizable URLs/commands)
+                if isinstance(srv_cfg, dict) and svc is None:
+                    haystack = " ".join(str(v) for v in srv_cfg.values() if isinstance(v, str))
+                    svc = _svc_from_aliases(haystack)
+                    if svc and svc not in prefixes:
                         prefixes[svc] = prefix
+            # 3. Match on permissions.allow tool names (catches already-permissioned installs)
             for entry in data.get("permissions", {}).get("allow", []):
                 if not entry.startswith("mcp__"):
                     continue
                 parts = entry.split("__", 2)
                 if len(parts) < 3:
                     continue
-                prefix = f"mcp__{parts[1]}__"
                 tool = parts[2]
                 for svc, hints in KNOWN_SERVICES.items():
                     if any(h in tool for h in hints) and svc not in prefixes:
-                        prefixes[svc] = prefix
+                        prefixes[svc] = f"mcp__{parts[1]}__"
         except Exception:
             pass
-    for svc in ["granola", "scheduled-tasks", "ccd_session"]:
+    # scheduled-tasks and ccd_session are Claude Code built-ins — always present.
+    # Granola is detected via alias matching above; don't hardcode it.
+    for svc in ["scheduled-tasks", "ccd_session"]:
         prefixes[svc] = f"mcp__{svc}__"
     return prefixes
 
@@ -125,6 +160,20 @@ def _read_skill(task_name, config):
     tmpl = TEMPLATES_DIR / "brain" / task_name / "SKILL.md.template"
     return fill_template(tmpl.read_text(), config) if tmpl.exists() else ""
 
+def _build_milestones_list(milestones):
+    """Format milestone list for milestones.md template."""
+    if not milestones:
+        return "<!-- No milestones added yet — manage them from the 🏁 MILESTONES button in your Alfred brief -->"
+    parts = []
+    for m in milestones:
+        name = m.get("name", "").strip()
+        if not name:
+            continue
+        desc        = m.get("description", "").strip() or "No description provided."
+        target_date = m.get("target_date", "").strip() or "TBD"
+        parts.append(f"## {name}\n**Description:** {desc}\n**Target date:** {target_date}\n**Status:** active")
+    return "\n\n".join(parts) if parts else "<!-- No milestones added yet — manage them from the 🏁 MILESTONES button in your Alfred brief -->"
+
 def run_install(raw, emit):
     """Full install pipeline. raw = dict from browser form. Calls emit(msg, level) for progress."""
     home = str(Path.home())
@@ -133,6 +182,7 @@ def run_install(raw, emit):
 
     stk   = raw.get("stakeholders", [{}])
     nofly = [e for e in raw.get("nofly_emails", []) if e]
+    nofly_never = bool(raw.get("nofly_never", False))
     drs   = raw.get("direct_reports", [{}])
     product = raw.get("product", "")
     quarter = f"Q{((datetime.today().month-1)//3)+1} {datetime.today().year}"
@@ -154,11 +204,11 @@ def run_install(raw, emit):
         "MANAGER_NAME":          raw["mgr_name"],
         "MANAGER_TITLE":         raw["mgr_title"],
         "MANAGER_NOTE":          raw.get("mgr_note", ""),
-        "NOFLY_1":               nofly[0] if len(nofly) > 0 else "",
-        "NOFLY_2":               nofly[1] if len(nofly) > 1 else "",
-        "NOFLY_3":               nofly[2] if len(nofly) > 2 else "",
-        "NOFLY_LIST":            ", ".join(nofly) if nofly else "",
-        "NOFLY_LIST_MD":         "\n".join(f"- {e}" for e in nofly) if nofly else "- (none set)",
+        "NOFLY_1":               "everyone" if nofly_never else (nofly[0] if len(nofly) > 0 else ""),
+        "NOFLY_2":               "" if nofly_never else (nofly[1] if len(nofly) > 1 else ""),
+        "NOFLY_3":               "" if nofly_never else (nofly[2] if len(nofly) > 2 else ""),
+        "NOFLY_LIST":            "everyone — never send any calendar invites on my behalf" if nofly_never else (", ".join(nofly) if nofly else ""),
+        "NOFLY_LIST_MD":         "- everyone — never send any calendar invites on my behalf" if nofly_never else ("\n".join(f"- {e}" for e in nofly) if nofly else "- (none set)"),
         "DIRECT_REPORT_1":       drs[0].get("name", "") if drs else "",
         "DIRECT_REPORT_1_TITLE": drs[0].get("title", "") if drs else "",
         "DIRECT_REPORT_1_NOTE":  drs[0].get("note", "") if drs else "",
@@ -174,9 +224,9 @@ def run_install(raw, emit):
             for d in drs if d.get("name")
         ) or "- (none set)",
         "DIRECT_REPORTS_INLINE": " + ".join(d.get("name", "") for d in drs if d.get("name")) or "team",
-        "MILESTONES_LIST":        "<!-- No milestones added yet — manage them from the 🏁 MILESTONES button in your Alfred brief -->",
+        "MILESTONES_LIST":        _build_milestones_list(raw.get("milestones", [])),
         "PRODUCT_NAME":          product,
-        "ROLLOUT_DATE":          "",
+        "ROLLOUT_DATE":          raw.get("rollout_date", ""),
         "CURRENT_QUARTER":       quarter,
         "TIMEZONE":              raw.get("timezone", "America/New_York"),
         "BRIEFS_DIR":            briefs_dir,
@@ -192,7 +242,7 @@ def run_install(raw, emit):
     config["INITIATIVE_1_NAME"]   = product_label
     config["INITIATIVE_1_DESC"]   = f"Rolling out {product_label} across {config['COMPANY']}"
     config["INITIATIVE_1_METRIC"] = "Adoption rate, active usage"
-    config["INITIATIVE_1_DATE"]   = "TBD"
+    config["INITIATIVE_1_DATE"]   = raw.get("rollout_date", "") or "TBD"
 
     # Detect MCPs
     emit("Detecting MCP connections…", "info")
@@ -201,18 +251,19 @@ def run_install(raw, emit):
                   "drive": "Google Drive", "granola": "Granola"}
     found = []
     for svc, label in svc_labels.items():
-        if svc in prefixes and svc not in ("granola", "scheduled-tasks", "ccd_session"):
+        if svc in prefixes:
             emit(f"✓ {label} detected", "ok")
             found.append(svc)
-        elif svc != "granola":
-            req = " (required)" if svc in ("slack", "calendar") else ""
-            emit(f"⚠ {label} not detected{req} — placeholder used", "warn")
+        else:
+            req = " (required)" if svc in ("slack", "calendar") else " (optional)"
+            emit(f"⚠ {label} not detected{req}", "warn")
 
     config["MCP_SLACK"]    = prefixes.get("slack",    "mcp__REPLACE_SLACK_ID__")
     config["MCP_GMAIL"]    = prefixes.get("gmail",    "mcp__REPLACE_GMAIL_ID__")
     config["MCP_CALENDAR"] = prefixes.get("calendar", "mcp__REPLACE_CALENDAR_ID__")
     config["MCP_DRIVE"]    = prefixes.get("drive",    "mcp__REPLACE_DRIVE_ID__")
-    config["MCP_GRANOLA"]  = "mcp__granola__"
+    # Granola always uses the fixed prefix mcp__granola__ if installed.
+    config["MCP_GRANOLA"]  = prefixes.get("granola",  "mcp__granola__")
     config["MCP_AVAILABLE"] = ", ".join(found)
 
     # Permissions
@@ -252,33 +303,47 @@ def run_install(raw, emit):
             install_template(src, tasks_dir / task / "SKILL.md", config)
             emit(f"✓ {task}", "ok")
 
-    # Slash command
-    emit("Installing /alfred command…", "info")
-    src = TEMPLATES_DIR / "commands" / "alfred.md.template"
-    if src.exists():
-        install_template(src, cmds_dir / "alfred.md", config)
-        emit("✓ /alfred command", "ok")
+    # Slash commands
+    emit("Installing /alfred commands…", "info")
+    for cmd in ["alfred", "alfred-config"]:
+        src = TEMPLATES_DIR / "commands" / f"{cmd}.md.template"
+        if src.exists():
+            install_template(src, cmds_dir / f"{cmd}.md", config)
+            emit(f"✓ /{cmd} command", "ok")
 
     # Memory files
     emit("Installing memory files…", "info")
-    mem_templates = {
+    # Files regenerated every run — purely derived from wizard inputs.
+    mem_templates_always = {
         "user_role.md.template":            "user_role.md",
-        "stakeholders.md.template":         "stakeholders.md",
-        "calibrations.md.template":         "calibrations.md",
-        "feedback_blindspots.md.template":  "feedback_blindspots.md",
         "project_initiatives.md.template":  "project_q2_initiatives.md",
         "project_personal_cos.md.template": "project_personal_cos.md",
         "milestones.md.template":           "milestones.md",
         "MEMORY.md.template":               "MEMORY.md",
     }
-    for tmpl, dst_name in mem_templates.items():
+    # Files written only on first install — preserved on re-run to protect
+    # calibrations, trained feedback rules, and hand-edited stakeholder notes.
+    mem_templates_preserve = {
+        "stakeholders.md.template":         "stakeholders.md",
+        "calibrations.md.template":         "calibrations.md",
+        "feedback_blindspots.md.template":  "feedback_blindspots.md",
+        "delivered.md.template":            "delivered.md",
+    }
+    for tmpl, dst_name in mem_templates_always.items():
         src = TEMPLATES_DIR / "memory" / tmpl
         if src.exists():
             install_template(src, memory_dir / dst_name, config)
             emit(f"✓ {dst_name}", "ok")
+    for tmpl, dst_name in mem_templates_preserve.items():
+        src  = TEMPLATES_DIR / "memory" / tmpl
+        dst  = memory_dir / dst_name
+        if dst.exists():
+            emit(f"⏭  {dst_name} — already exists, preserved", "info")
+        elif src.exists():
+            install_template(src, dst, config)
+            emit(f"✓ {dst_name}", "ok")
     for fname, content in [
         ("last_brief.md", "# Last Brief State\n\n(Populated by Alfred after first run)\n"),
-        ("jira_state.md", "# Jira State Ledger\n\n(Populated by Alfred)\n"),
     ]:
         dst = memory_dir / fname
         if not dst.exists():
@@ -314,73 +379,91 @@ def run_install(raw, emit):
     CONFIG_PATH.write_text(json.dumps(config_out, indent=2))
     emit("✓ Config saved", "ok")
 
-    # Finish prompt
+    # Finish prompt — uses read-before-create pattern to avoid SKILL.md being overwritten
     emit("Building finish prompt…", "info")
-    morning_skill = _read_skill("morning-brief",   config)
-    premeet_skill = _read_skill("pre-meeting-brief", config)
-    friday_skill  = _read_skill("friday-wrap",      config)
 
-    prompt = f"""You are Alfred, the personal AI Chief of Staff. A new user just ran the setup wizard. Complete their installation by doing the following — work through all three tasks in order.
+    prompt = f"""You are Alfred, the personal AI Chief of Staff. A new user just ran the setup wizard. Complete their installation in two tasks.
 
 **User:** {config["USER_NAME"]} ({config["USER_EMAIL"]})
-**Company:** {config["COMPANY"]}
 **Timezone:** {config["TIMEZONE"]}
 **Briefs directory:** {config["BRIEFS_DIR"]}
-**Memory directory:** {str(memory_dir)}
 
 ---
 
 # Task 1 — Register scheduled tasks
 
-⚠️ CRITICAL: The scheduled task tool OVERWRITES the SKILL.md with just the prompt string. After creating each task you MUST immediately overwrite the SKILL.md with the FULL content provided below. Do not skip this — the full content is embedded here so you never need to read from disk.
+First, check whether the `mcp__scheduled-tasks__create_scheduled_task` tool is available in your current session.
 
-Create three scheduled tasks using mcp__scheduled-tasks__create_scheduled_task:
+---
 
-## 1a — Create morning-brief task
-- cronExpression: `57 7 * * 1-5`
-- prompt: `Read and execute the instructions in {home}/.claude/scheduled-tasks/morning-brief/SKILL.md`
-- description: `Alfred — morning brief, Mon–Fri 7:57 AM`
+## Path A — if `scheduled-tasks` is available (preferred)
 
-## 1b — Immediately restore morning-brief/SKILL.md
-Write the following content exactly to `{home}/.claude/scheduled-tasks/morning-brief/SKILL.md`. Write it verbatim, preserving all backticks, indentation, and newlines:
+⚠️ `create_scheduled_task` overwrites SKILL.md with a short string. For each task: (1) read the file first, (2) create the task, (3) write the content back immediately.
 
-<<<MORNING_SKILL_START>>>
-{morning_skill}
-<<<MORNING_SKILL_END>>>
+### Morning brief
+1. Read `{home}/.claude/scheduled-tasks/morning-brief/SKILL.md`
+2. Create scheduled task — cronExpression: `57 7 * * 1-5`, prompt: `Read and execute the instructions in {home}/.claude/scheduled-tasks/morning-brief/SKILL.md`, description: `Alfred — morning brief, Mon–Fri 7:57 AM`
+3. Write the content from step 1 back to `{home}/.claude/scheduled-tasks/morning-brief/SKILL.md`
 
-## 2a — Create pre-meeting-brief task
-- cronExpression: `*/10 7-19 * * 1-5`
-- prompt: `Read and execute the instructions in {home}/.claude/scheduled-tasks/pre-meeting-brief/SKILL.md`
-- description: `Alfred — pre-meeting brief, every 10 min on weekdays`
-- notifyOnCompletion: false
+### Pre-meeting brief
+1. Read `{home}/.claude/scheduled-tasks/pre-meeting-brief/SKILL.md`
+2. Create scheduled task — cronExpression: `*/10 7-19 * * 1-5`, prompt: `Read and execute the instructions in {home}/.claude/scheduled-tasks/pre-meeting-brief/SKILL.md`, description: `Alfred — pre-meeting brief, every 10 min on weekdays`, notifyOnCompletion: false
+3. Write the content from step 1 back to `{home}/.claude/scheduled-tasks/pre-meeting-brief/SKILL.md`
 
-## 2b — Immediately restore pre-meeting-brief/SKILL.md
-Write the following content exactly to `{home}/.claude/scheduled-tasks/pre-meeting-brief/SKILL.md`:
+### Friday wrap
+1. Read `{home}/.claude/scheduled-tasks/friday-wrap/SKILL.md`
+2. Create scheduled task — cronExpression: `0 16 * * 5`, prompt: `Read and execute the instructions in {home}/.claude/scheduled-tasks/friday-wrap/SKILL.md`, description: `Alfred — Friday week wrap at 4 PM`, notifyOnCompletion: false
+3. Write the content from step 1 back to `{home}/.claude/scheduled-tasks/friday-wrap/SKILL.md`
 
-<<<PREMEET_SKILL_START>>>
-{premeet_skill}
-<<<PREMEET_SKILL_END>>>
+---
 
-## 3a — Create friday-wrap task
-- cronExpression: `0 16 * * 5`
-- prompt: `Read and execute the instructions in {home}/.claude/scheduled-tasks/friday-wrap/SKILL.md`
-- description: `Alfred — Friday week wrap at 4 PM`
-- notifyOnCompletion: false
+## Path B — if `scheduled-tasks` is NOT available
 
-## 3b — Immediately restore friday-wrap/SKILL.md
-Write the following content exactly to `{home}/.claude/scheduled-tasks/friday-wrap/SKILL.md`:
+`scheduled-tasks` is Claude Code's Desktop Scheduled Tasks feature. If it's not injected in your session, the user's Claude Code needs an update.
 
-<<<FRIDAY_SKILL_START>>>
-{friday_skill}
-<<<FRIDAY_SKILL_END>>>
+Tell the user:
+
+> The `scheduled-tasks` tool isn't available in this session — this means Claude Code needs to be updated. Please:
+> 1. Open Claude Code → **Help → Check for Updates** and install any available update
+> 2. Quit and reopen Claude Code
+> 3. Start a **new session** and re-paste this setup prompt
+>
+> After updating, Path A above will work automatically.
+>
+> **Do not use CronCreate as a workaround** — CronCreate tasks expire after 7 days and Alfred will silently stop running.
+
+Do not proceed to Task 2 until the user has confirmed Path A succeeded.
+
+---
+
+# Task 1.5 — Resolve any undetected MCP placeholders
+
+The setup wizard auto-detects MCP tool prefixes, but some Claude Code configurations don't expose them in settings files. Scan these files for any remaining `mcp__REPLACE_` placeholder strings:
+
+- `{home}/.claude/scheduled-tasks/morning-brief/SKILL.md`
+- `{home}/.claude/scheduled-tasks/pre-meeting-brief/SKILL.md`
+- `{home}/.claude/scheduled-tasks/friday-wrap/SKILL.md`
+- `{home}/.claude/commands/alfred.md`
+
+If any `mcp__REPLACE_` strings are present:
+1. Read `{home}/.claude/settings.local.json` and `{home}/.claude/settings.json`
+2. Identify the actual MCP prefix for each service — look for tool entries in `permissions.allow` (e.g. `mcp__UUID__slack_send_message`) and server keys in `mcpServers`
+3. In every affected file, replace:
+   - `mcp__REPLACE_SLACK_ID__` → the detected Slack prefix
+   - `mcp__REPLACE_GMAIL_ID__` → the detected Gmail prefix
+   - `mcp__REPLACE_CALENDAR_ID__` → the detected Google Calendar prefix
+   - `mcp__REPLACE_DRIVE_ID__` → the detected Google Drive prefix
+4. Write the corrected content back to each file
+
+If no `mcp__REPLACE_` strings are found in any file, skip this step entirely.
 
 ---
 
 # Task 2 — Generate first brief
 
-Run the morning brief SKILL.md to generate {config["USER_NAME"]}'s first Alfred brief. Deliver it as HTML to `{config["BRIEFS_DIR"]}` and open it in the browser.
+Read and execute `{home}/.claude/scheduled-tasks/morning-brief/SKILL.md` to generate {config["USER_NAME"]}'s first Alfred brief now.
 
-Confirm when all three tasks are complete.
+Confirm when done.
 """
 
     out = ALFRED_REPO / "setup" / "complete-setup-prompt.txt"
@@ -542,10 +625,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,san
 <script>
 // ── Config ────────────────────────────────────────────────────────────────────
 const STEPS = [
-  { label:'You',    id:'you' },
-  { label:'People', id:'people' },
-  { label:'Team',   id:'team' },
-  { label:'Paths',  id:'paths' },
+  { label:'You',       id:'you' },
+  { label:'People',    id:'people' },
+  { label:'Team',      id:'team' },
+  { label:'Goals',     id:'goals' },
+  { label:'Paths',     id:'paths' },
 ];
 const REVIEW_STEP  = STEPS.length + 1;  // 5
 const INSTALL_STEP = REVIEW_STEP  + 1;  // 6
@@ -558,7 +642,9 @@ let mcpStatus = null;
 // ── Dynamic state ─────────────────────────────────────────────────────────────
 let stakeholders  = [{name:'', title:'', note:''}];
 let noflyEmails   = [''];
+let noflyNever    = false;
 let directReports = [{name:'', title:'', note:''}];
+let milestones    = [{name:'', description:'', target_date:''}];
 
 // ── Step bar ──────────────────────────────────────────────────────────────────
 function renderStepBar() {
@@ -584,9 +670,19 @@ async function loadMCPs() {
   if (step === 0) renderStep();
 }
 
+// Per-service manual override — set when user checks "I set this up"
+var mcpManual = {};
+function mcpToggleManual(key) {
+  mcpManual[key] = !mcpManual[key];
+  renderStep();
+}
+function mcpIsOk(key) {
+  return (mcpStatus && mcpStatus[key] && mcpStatus[key].detected) || !!mcpManual[key];
+}
+
 function mcpPanel() {
-  if (!mcpStatus) return `<div class="mcp-panel"><div class="mcp-title">Checking connections</div>
-    <div class="mcp-row"><div class="mcp-dot spin"></div> Detecting MCP tools…</div></div>`;
+  if (!mcpStatus) return `<div class="mcp-panel"><div class="mcp-title">Checking connections…</div>
+    <div class="mcp-row"><div class="mcp-dot spin"></div> Scanning config files…</div></div>`;
   const svcs = [
     {key:'slack',    label:'Slack',           req:true},
     {key:'calendar', label:'Google Calendar', req:true},
@@ -595,18 +691,24 @@ function mcpPanel() {
     {key:'granola',  label:'Granola',         req:false},
   ];
   const rows = svcs.map(s => {
-    const info = mcpStatus[s.key] || {};
-    const dot  = info.detected ? 'ok' : 'warn';
+    const ok    = mcpIsOk(s.key);
+    const auto  = mcpStatus[s.key] && mcpStatus[s.key].detected;
     const badge = s.req ? '<span class="mcp-badge req">Required</span>'
                         : '<span class="mcp-badge rec">Recommended</span>';
-    const col = info.detected ? '#34c759' : '#FF9500';
-    const lbl = info.detected ? 'Connected' : 'Not detected';
-    return `<div class="mcp-row"><div class="mcp-dot ${dot}"></div>${s.label} — <span style="color:${col}">${lbl}</span>${badge}</div>`;
+    const dot   = ok ? 'ok' : 'warn';
+    const col   = ok ? '#34c759' : '#FF9500';
+    const lbl   = auto ? 'Auto-detected' : ok ? 'Confirmed (manual)' : 'Not detected';
+    const chk   = !auto ? `<label style="margin-left:auto;font-size:11px;color:#6e6e73;cursor:pointer;display:flex;align-items:center;gap:4px">
+      <input type="checkbox" ${mcpManual[s.key]?'checked':''} onchange="mcpToggleManual('${s.key}')"> I set this up
+    </label>` : '';
+    return `<div class="mcp-row" style="gap:6px"><div class="mcp-dot ${dot}"></div>${s.label} — <span style="color:${col}">${lbl}</span>${badge}${chk}</div>`;
   }).join('');
-  const allReq = ['slack','calendar'].every(k => mcpStatus[k] && mcpStatus[k].detected);
-  const warn = allReq ? '' : `<div style="margin-top:10px;font-size:12px;color:#FF9500;line-height:1.5">
-    Required MCPs not detected. If connected in Claude Code (Settings &rarr; Integrations &rarr; MCP Servers), continue anyway.</div>`;
-  return `<div class="mcp-panel"><div class="mcp-title">MCP Connections</div>${rows}${warn}</div>`;
+  const allReq = ['slack','calendar'].every(k => mcpIsOk(k));
+  const note = `<div style="margin-top:10px;font-size:12px;color:#6e6e73;line-height:1.5">
+    Connections set up via <strong>Claude app Settings &rarr; Connectors</strong> can&rsquo;t be auto-detected — check &ldquo;I set this up&rdquo; for each one you&rsquo;ve connected.</div>`;
+  const warn = allReq ? '' : `<div style="margin-top:8px;font-size:12px;color:#FF9500;line-height:1.5">
+    Mark required connections above before continuing.</div>`;
+  return `<div class="mcp-panel"><div class="mcp-title">Connections</div>${rows}${note}${warn}</div>`;
 }
 
 // ── Field helpers ─────────────────────────────────────────────────────────────
@@ -689,19 +791,30 @@ function saveNofly() {
     var el = document.getElementById('nf_'+i);
     return el ? el.value.trim() : '';
   });
+  var cb = document.getElementById('nofly-never-cb');
+  if (cb) noflyNever = cb.checked;
 }
 function renderNofly() {
   var c = document.getElementById('nofly-list');
   if (!c) return;
+  var disabled = noflyNever;
   c.innerHTML = noflyEmails.map(function(v, i) {
     var rm = noflyEmails.length > 1
-      ? `<button class="ditem-rm" onclick="removeNofly(${i})" type="button" style="flex-shrink:0">&times;</button>` : '';
-    return `<div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+      ? `<button class="ditem-rm" onclick="removeNofly(${i})" type="button" style="flex-shrink:0"${disabled?' disabled':''}>×</button>` : '';
+    return `<div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;opacity:${disabled?0.35:1}">
       <input type="email" id="nf_${i}" value="${esc(v)}" placeholder="name@company.com"
-             style="flex:1;padding:10px 13px;border:1.5px solid #d2d2d7;border-radius:9px;font-size:14px;outline:none">
+             style="flex:1;padding:10px 13px;border:1.5px solid #d2d2d7;border-radius:9px;font-size:14px;outline:none"
+             ${disabled?'disabled':''}>
       ${rm}
     </div>`;
   }).join('');
+  var addBtn = document.getElementById('nofly-add-btn');
+  if (addBtn) addBtn.disabled = disabled;
+}
+function toggleNoflyNever() {
+  var cb = document.getElementById('nofly-never-cb');
+  noflyNever = cb ? cb.checked : false;
+  renderNofly();
 }
 function addNofly() {
   saveNofly();
@@ -762,18 +875,62 @@ function removeDirectReport(i) {
   renderDirectReports();
 }
 
+// ── Milestones list ───────────────────────────────────────────────────────────
+function saveMilestones() {
+  milestones.forEach(function(m, i) {
+    var n = document.getElementById('ms_name_'+i);
+    var d = document.getElementById('ms_desc_'+i);
+    var t = document.getElementById('ms_date_'+i);
+    if (n) m.name        = n.value.trim();
+    if (d) m.description = d.value.trim();
+    if (t) m.target_date = t.value.trim();
+  });
+}
+function renderMilestones() {
+  var c = document.getElementById('milestones-list');
+  if (!c) return;
+  c.innerHTML = milestones.map(function(m, i) {
+    var rm = milestones.length > 1
+      ? `<button class="ditem-rm" onclick="removeMilestone(${i})" type="button">&times;</button>` : '';
+    return `<div class="ditem">
+      <div class="ditem-hdr"><span class="ditem-lbl">Milestone ${i+1}</span>${rm}</div>
+      <div class="field">
+        <label>Name</label>
+        <input type="text" id="ms_name_${i}" value="${esc(m.name)}" placeholder="e.g. Launch new product line" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Description <span class="opt">(optional)</span></label>
+        <input type="text" id="ms_desc_${i}" value="${esc(m.description)}" placeholder="Plain English — Alfred uses this to find relevant signals" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Target date <span class="opt">(optional)</span></label>
+        <input type="date" id="ms_date_${i}" value="${esc(m.target_date)}">
+      </div>
+    </div>`;
+  }).join('');
+}
+function addMilestone() {
+  saveMilestones();
+  milestones.push({name:'', description:'', target_date:''});
+  renderMilestones();
+  var el = document.getElementById('ms_name_'+(milestones.length-1));
+  if (el) el.focus();
+}
+function removeMilestone(i) {
+  saveMilestones();
+  milestones.splice(i, 1);
+  renderMilestones();
+}
+
 // ── Step content ──────────────────────────────────────────────────────────────
 function stepContent(i) {
   switch(i) {
     case 0:
       return `<h2>Before we start</h2>
-        <p class="desc">Alfred needs a few apps connected in Claude Code. Check the status below — if anything required is missing, go to Claude Code Settings &rarr; Integrations &rarr; MCP Servers first, then refresh this page.</p>
+        <p class="desc">Alfred needs Slack and Google Calendar connected. Set them up via <strong>Claude app Settings &rarr; Connectors</strong> (or Claude Code Settings &rarr; Integrations &rarr; MCP Servers), then confirm each one below.</p>
         ${mcpPanel()}
         <div style="font-size:13px;color:#6e6e73;line-height:1.55;margin-top:12px">
           <strong>Also required: Git.</strong> If you don&rsquo;t have Git installed, the installer will detect this and prompt macOS to install it automatically — just follow the pop-up.
-        </div>
-        <div style="font-size:13px;color:#6e6e73;line-height:1.55;margin-top:8px">
-          Once required connections show <span style="color:#34c759">Connected</span>, click <strong>Get Started</strong>.
         </div>`;
 
     case 1:
@@ -786,12 +943,13 @@ function stepContent(i) {
         ${field('company','Company name')}
         ${field('role','Your role',{hint:'One sentence, e.g. "Sr Director of AI GTM at Acme"'})}
         ${field('mission','Your mission',{hint:'What are you responsible for? e.g. "Building the AI-first revenue org"'})}
-        ${field('product','Main product or initiative',{required:false,hint:'e.g. "Elixir" — Alfred uses this for weekly product signals. You can add this later.'})}
+        ${field('product','Main product or initiative',{required:false,hint:'e.g. "Acme Pro" — Alfred uses this to track signals. You can add this later.'})}
         ${field('slack_uid','Slack user ID',{
           how:'Open Slack &rarr; click your avatar &rarr; <strong>Profile</strong> &rarr; <strong>&middot;&middot;&middot;</strong> menu &rarr; <strong>Copy member ID</strong>. Starts with U.',
           errMsg:'Must start with U'})}
         ${field('slack_ws','Slack workspace ID',{
-          how:'In Slack: click workspace name (top-left) &rarr; <strong>Settings &amp; administration</strong> &rarr; <strong>Workspace settings</strong>. ID is in the URL, starts with T.',
+          required:false,
+          how:'In Slack: click workspace name (top-left) &rarr; <strong>Settings &amp; administration</strong> &rarr; <strong>Workspace settings</strong>. ID is in the URL, starts with T. Requires workspace admin access — skip if you don&rsquo;t have it.',
           errMsg:'Must start with T'})}`;
 
     case 2:
@@ -820,8 +978,13 @@ function stepContent(i) {
           <span class="nofly-icon">&#128065;</span>
           <span>Alfred will <strong>never schedule a calendar invite</strong> to anyone on this list. Add executives or anyone who requires EA scheduling — so Alfred knows to flag it rather than book directly.</span>
         </div>
+        <label style="display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:14px;cursor:pointer;user-select:none">
+          <input type="checkbox" id="nofly-never-cb" ${noflyNever?'checked':''} onchange="toggleNoflyNever()"
+                 style="width:16px;height:16px;cursor:pointer;accent-color:#F5C518">
+          <span>Alfred should <strong>never</strong> send a calendar invite on my behalf to anyone</span>
+        </label>
         <div id="nofly-list"></div>
-        <button class="add-btn" onclick="addNofly()" type="button">+ Add another email</button>`;
+        <button class="add-btn" id="nofly-add-btn" onclick="addNofly()" type="button">+ Add another email</button>`;
 
     case 3:
       return `<h2>Your team</h2>
@@ -830,6 +993,19 @@ function stepContent(i) {
         <button class="add-btn" onclick="addDirectReport()" type="button">+ Add another team member</button>`;
 
     case 4:
+      return `<h2>Goals &amp; milestones</h2>
+        <p class="desc">Alfred tracks progress signals for each milestone every brief — searching Slack, meetings, and email for what's moving and what's at risk.</p>
+        ${field('rollout_date','Main initiative target date',{
+          required:false,
+          hint:'YYYY-MM-DD — powers the "Days to rollout" countdown in your brief. e.g. 2026-07-01'})}
+        <hr class="sep">
+        <div class="sub-h">Milestones</div>
+        <p class="sub-p">Specific checkpoints Alfred watches each run.</p>
+        <div id="milestones-list"></div>
+        <button class="add-btn" onclick="addMilestone()" type="button">+ Add another milestone</button>
+        <p style="font-size:13px;color:#6e6e73;margin-top:16px">You can skip this and add milestones later from the 🏁 button in your brief.</p>`;
+
+    case 5:
       return `<h2>Timezone &amp; save location</h2>
         <p class="desc">When and where Alfred delivers your briefs.</p>
         ${selectField('timezone','Your timezone',TIMEZONE_OPTIONS)}
@@ -841,7 +1017,7 @@ function stepContent(i) {
 
 // ── Validation ────────────────────────────────────────────────────────────────
 const REQUIRED_SCALAR = {
-  1: ['name','email','company','role','mission','slack_uid','slack_ws'],
+  1: ['name','email','company','role','mission','slack_uid'],
   2: ['mgr_name','mgr_title'],
   3: [],
   4: [],
@@ -881,8 +1057,9 @@ function validate() {
 function collectStep() {
   if (step === 2) { saveStakeholders(); saveNofly(); }
   if (step === 3) { saveDirectReports(); }
+  if (step === 4) { saveMilestones(); }
   var ids = ['name','email','company','role','mission','product','slack_uid','slack_ws',
-             'mgr_name','mgr_title','mgr_note','timezone','briefs_dir'];
+             'mgr_name','mgr_title','mgr_note','rollout_date','timezone','briefs_dir'];
   ids.forEach(function(id) {
     var el = document.getElementById(id);
     if (el && el.value.trim()) formData[id] = el.value.trim();
@@ -892,13 +1069,17 @@ function collectStep() {
 
 // ── Review ────────────────────────────────────────────────────────────────────
 function reviewContent() {
-  var nfList  = noflyEmails.filter(function(e){return e;}).join(', ') || '—';
+  var nfList  = noflyNever ? 'Never send any calendar invites'
+              : noflyEmails.filter(function(e){return e;}).join(', ') || '—';
   var stkList = stakeholders.filter(function(s){return s.name;})
                             .map(function(s){return s.name + (s.title ? ' ('+s.title+')' : '');})
                             .join(', ') || '—';
   var drList  = directReports.filter(function(d){return d.name;})
                              .map(function(d){return d.name + (d.title ? ' ('+d.title+')' : '');})
                              .join(', ') || '—';
+  var msList = milestones.filter(function(m){return m.name;})
+                         .map(function(m){return m.name + (m.target_date ? ' → '+m.target_date : '');})
+                         .join(', ') || '—';
   var rows = [
     ['Name',          formData.name||'—'],
     ['Email',         formData.email||'—'],
@@ -909,6 +1090,7 @@ function reviewContent() {
     ['Stakeholders',  stkList],
     ['No-fly list',   nfList],
     ['Team',          drList],
+    ['Milestones',    msList],
     ['Product',       formData.product||'—'],
     ['Timezone',      formData.timezone||'America/New_York'],
     ['Briefs saved to', formData.briefs_dir||'~/Documents/Alfred Briefs'],
@@ -935,9 +1117,12 @@ function startInstall() {
     mgr_name:       formData.mgr_name||'',
     mgr_title:      formData.mgr_title||'',
     mgr_note:       formData.mgr_note||'',
+    rollout_date:   formData.rollout_date||'',
     stakeholders:   stakeholders,
     nofly_emails:   noflyEmails.filter(function(e){return e;}),
+    nofly_never:    noflyNever,
     direct_reports: directReports,
+    milestones:     milestones.filter(function(m){return m.name;}),
     timezone:       formData.timezone||'America/New_York',
     briefs_dir:     formData.briefs_dir||'',
   };
@@ -1057,6 +1242,7 @@ function renderStep() {
   // Init dynamic sections
   if (step === 2) { renderStakeholders(); renderNofly(); }
   if (step === 3) { renderDirectReports(); }
+  if (step === 4) { renderMilestones(); }
 
   // Re-apply select values
   Object.keys(formData).forEach(function(id) {

@@ -133,8 +133,9 @@ def detect_mcp_ids():
                             prefixes[service] = prefix
         except Exception:
             pass
-    # Non-UUID services use their name directly
-    for svc in ["granola", "scheduled-tasks", "ccd_session"]:
+    # scheduled-tasks and ccd_session are Claude Code built-ins — always present.
+    # Granola is detected via alias matching above; don't hardcode it.
+    for svc in ["scheduled-tasks", "ccd_session"]:
         prefixes[svc] = f"mcp__{svc}__"
     return prefixes
 
@@ -155,6 +156,19 @@ def install_template(src, dst, config):
 
 # ── Setup steps ───────────────────────────────────────────────────────────────
 
+def _build_milestones_list(product, rollout_date, company):
+    """Build the initial milestones.md block from wizard inputs."""
+    if not product:
+        return "<!-- No milestones added yet — manage them from the 🏁 MILESTONES button in your Alfred brief -->"
+    target = rollout_date or "TBD"
+    return (
+        f"## {product} Rollout\n"
+        f"**Description:** Roll out {product} across {company}\n"
+        f"**Target date:** {target}\n"
+        f"**Status:** active"
+    )
+
+
 def collect_config():
     banner("Step 1 — About you")
     name     = ask("Your full name")
@@ -169,8 +183,8 @@ def collect_config():
             break
 
     while True:
-        slack_ws = ask("Your Slack workspace ID (in Slack: click workspace name top-left → Settings & administration → Workspace settings — copy the ID starting with T)")
-        if validate_slack_workspace(slack_ws):
+        slack_ws = ask("Your Slack workspace ID (optional — requires workspace admin access; starts with T)", required=False)
+        if not slack_ws or validate_slack_workspace(slack_ws):
             break
 
     banner("Step 2 — Key stakeholders")
@@ -180,12 +194,13 @@ def collect_config():
     t1_note1  = ask(f"  One-line note on how to work with {t1_name1}", required=False)
     t1_name2  = ask("Top stakeholder #2 name (or press Enter to skip)", required=False)
     t1_title2 = ask(f"  {t1_name2}'s title", required=False) if t1_name2 else ""
-    t1_note2  = ""
+    t1_note2  = ask(f"  One-line note on working with {t1_name2}", required=False) if t1_name2 else ""
     mgr_name  = ask("Your manager's name")
     mgr_title = ask(f"  {mgr_name}'s title")
     mgr_note  = ask(f"  One-line note on working with {mgr_name}", required=False)
-    nofly2    = ask("Calendar no-fly #2 (another C-suite who needs EA scheduling)", required=False)
-    nofly3    = ask("Calendar no-fly #3", required=False)
+    nofly1    = ask("Calendar no-fly #1 (C-suite who needs EA scheduling, e.g. your CEO)", required=False)
+    nofly2    = ask("Calendar no-fly #2 (another exec, or press Enter to skip)", required=False)
+    nofly3    = ask("Calendar no-fly #3 (or press Enter to skip)", required=False)
 
     banner("Step 3 — Your team")
     dr1_name  = ask("Direct report / key peer #1 name")
@@ -215,43 +230,75 @@ def collect_config():
     # Escape spaces for use in bash commands
     briefs_dir_esc = briefs_dir.replace(" ", "\\ ")
 
+    # ── Build composite placeholders ─────────────────────────────────────────
+    # Tier-1 stakeholders list (markdown bullets for stakeholders.md)
+    tier1_entries = [(t1_name1, t1_title1, t1_note1 or "")]
+    if t1_name2:
+        tier1_entries.append((t1_name2, t1_title2, t1_note2 or ""))
+    stakeholders_list = "\n".join(
+        f"- **{n}** — {t}. {note}" for n, t, note in tier1_entries
+    ) or "- (none set)"
+
+    # No-fly list
+    nofly_entries = [e for e in [nofly1, nofly2, nofly3] if e]
+    nofly_list    = ", ".join(nofly_entries) if nofly_entries else ""
+    nofly_list_md = "\n".join(f"- {e}" for e in nofly_entries) if nofly_entries else "- (none set)"
+
+    # Direct reports (markdown bullets and inline)
+    dr_entries = [(dr1_name, dr1_title)]
+    if dr2_name:
+        dr_entries.append((dr2_name, dr2_title))
+    direct_reports_list   = "\n".join(
+        f"- **{n}** — {t}. Track commitments closely." for n, t in dr_entries
+    )
+    direct_reports_inline = " + ".join(n for n, _ in dr_entries) or "team"
+
+    # Milestones block
+    milestones_list = _build_milestones_list(product, rollout_date, company)
+
     return {
-        "USER_NAME":            name,
-        "USER_EMAIL":           email,
-        "COMPANY":              company,
-        "USER_ROLE":            role,
-        "USER_MISSION":         mission,
-        "SLACK_USER_ID":        slack_uid,
-        "SLACK_WORKSPACE_ID":   slack_ws,
-        "TIER1_NAME_1":         t1_name1,
-        "TIER1_TITLE_1":        t1_title1,
-        "TIER1_NOTE_1":         t1_note1 or "",
-        "TIER1_NAME_2":         t1_name2 or t1_name1,
-        "TIER1_TITLE_2":        t1_title2 or t1_title1,
-        "TIER1_NOTE_2":         t1_note2,
-        "MANAGER_NAME":         mgr_name,
-        "MANAGER_TITLE":        mgr_title,
-        "MANAGER_NOTE":         mgr_note or "",
-        "NOFLY_2":              nofly2 or mgr_name,
-        "NOFLY_3":              nofly3 or "",
-        "DIRECT_REPORT_1":      dr1_name,
-        "DIRECT_REPORT_1_TITLE": dr1_title,
-        "DIRECT_REPORT_2":      dr2_name or "",
-        "DIRECT_REPORT_2_TITLE": dr2_title or "",
-        "PRODUCT_NAME":         product,
-        "ROLLOUT_DATE":         rollout_date or "",
-        "CURRENT_QUARTER":      q_label,
-        "TIMEZONE":             timezone,
-        "BRIEFS_DIR":           briefs_dir,
-        "BRIEFS_DIR_ESC":       briefs_dir_esc,
-        "REPO_DIR":             repo_dir,
-        "HOME_DIR":             str(Path.home()),
-        "SLACK_SIGNAL_FILTER":  f"Surface signals relevant to {product} and {role}. Filter out deal-specific noise unless it involves {t1_name1} or {mgr_name}.",
-        # Initiative placeholders — user fills these in later
-        "INITIATIVE_1_NAME":    product,
-        "INITIATIVE_1_DESC":    f"Rolling out {product} across {company}",
-        "INITIATIVE_1_METRIC":  "Adoption rate, active usage",
-        "INITIATIVE_1_DATE":    rollout_date or "TBD",
+        "USER_NAME":              name,
+        "USER_EMAIL":             email,
+        "COMPANY":                company,
+        "USER_ROLE":              role,
+        "USER_MISSION":           mission,
+        "SLACK_USER_ID":          slack_uid,
+        "SLACK_WORKSPACE_ID":     slack_ws,
+        "TIER1_NAME_1":           t1_name1,
+        "TIER1_TITLE_1":          t1_title1,
+        "TIER1_NOTE_1":           t1_note1 or "",
+        "TIER1_NAME_2":           t1_name2 or t1_name1,
+        "TIER1_TITLE_2":          t1_title2 or t1_title1,
+        "TIER1_NOTE_2":           t1_note2 or "",
+        "MANAGER_NAME":           mgr_name,
+        "MANAGER_TITLE":          mgr_title,
+        "MANAGER_NOTE":           mgr_note or "",
+        "NOFLY_1":                nofly1 or "",
+        "NOFLY_2":                nofly2 or "",
+        "NOFLY_3":                nofly3 or "",
+        "NOFLY_LIST":             nofly_list,
+        "NOFLY_LIST_MD":          nofly_list_md,
+        "STAKEHOLDERS_LIST":      stakeholders_list,
+        "DIRECT_REPORT_1":        dr1_name,
+        "DIRECT_REPORT_1_TITLE":  dr1_title,
+        "DIRECT_REPORT_2":        dr2_name or "",
+        "DIRECT_REPORT_2_TITLE":  dr2_title or "",
+        "DIRECT_REPORTS_LIST":    direct_reports_list,
+        "DIRECT_REPORTS_INLINE":  direct_reports_inline,
+        "MILESTONES_LIST":        milestones_list,
+        "PRODUCT_NAME":           product,
+        "ROLLOUT_DATE":           rollout_date or "",
+        "CURRENT_QUARTER":        q_label,
+        "TIMEZONE":               timezone,
+        "BRIEFS_DIR":             briefs_dir,
+        "BRIEFS_DIR_ESC":         briefs_dir_esc,
+        "REPO_DIR":               repo_dir,
+        "HOME_DIR":               str(Path.home()),
+        "SLACK_SIGNAL_FILTER":    f"Surface signals relevant to {product} and {role}. Filter out deal-specific noise unless it involves {t1_name1} or {mgr_name}.",
+        "INITIATIVE_1_NAME":      product,
+        "INITIATIVE_1_DESC":      f"Rolling out {product} across {company}",
+        "INITIATIVE_1_METRIC":    "Adoption rate, active usage",
+        "INITIATIVE_1_DATE":      rollout_date or "TBD",
     }
 
 
@@ -373,29 +420,46 @@ def install_files(config):
         else:
             print(f"    ⚠️   {src} not found — skipping")
 
-    # Slash command
+    # Slash commands
     print("\n  Commands:")
-    src = TEMPLATES_DIR / "commands" / "alfred.md.template"
-    if src.exists():
-        install_template(src, CLAUDE_DIR / "commands" / "alfred.md", config)
-    else:
-        print(f"    ⚠️   alfred.md.template not found — skipping")
+    for cmd in ["alfred", "alfred-config"]:
+        src = TEMPLATES_DIR / "commands" / f"{cmd}.md.template"
+        if src.exists():
+            install_template(src, CLAUDE_DIR / "commands" / f"{cmd}.md", config)
+        else:
+            print(f"    ⚠️   {cmd}.md.template not found — skipping")
 
     # Memory files
     print("\n  Memory:")
-    memory_templates = {
-        "user_role.md.template":           "user_role.md",
-        "stakeholders.md.template":        "stakeholders.md",
-        "calibrations.md.template":        "calibrations.md",
-        "feedback_blindspots.md.template": "feedback_blindspots.md",
-        "project_initiatives.md.template": "project_q2_initiatives.md",
+    # Files regenerated every run — purely derived from wizard inputs.
+    memory_templates_always = {
+        "user_role.md.template":            "user_role.md",
+        "project_initiatives.md.template":  "project_q2_initiatives.md",
         "project_personal_cos.md.template": "project_personal_cos.md",
-        "MEMORY.md.template":              "MEMORY.md",
+        "milestones.md.template":           "milestones.md",
+        "MEMORY.md.template":               "MEMORY.md",
     }
-    for tmpl_name, dst_name in memory_templates.items():
+    # Files written only on first install — preserved on re-run to protect
+    # calibrations, trained feedback rules, and hand-edited stakeholder notes.
+    memory_templates_preserve = {
+        "stakeholders.md.template":         "stakeholders.md",
+        "calibrations.md.template":         "calibrations.md",
+        "feedback_blindspots.md.template":  "feedback_blindspots.md",
+        "delivered.md.template":            "delivered.md",
+    }
+    for tmpl_name, dst_name in memory_templates_always.items():
         src = TEMPLATES_DIR / "memory" / tmpl_name
         dst = memory_dir / dst_name
         if src.exists():
+            install_template(src, dst, config)
+        else:
+            print(f"    ⚠️   {src} not found — skipping")
+    for tmpl_name, dst_name in memory_templates_preserve.items():
+        src = TEMPLATES_DIR / "memory" / tmpl_name
+        dst = memory_dir / dst_name
+        if dst.exists():
+            print(f"    ⏭   {dst_name} — already exists, preserved")
+        elif src.exists():
             install_template(src, dst, config)
         else:
             print(f"    ⚠️   {src} not found — skipping")
@@ -403,7 +467,6 @@ def install_files(config):
     # Blank rolling files (only if they don't already exist — preserve on re-run)
     for fname, content in [
         ("last_brief.md", "# Last Brief State\n\n(Populated by Alfred after first run)\n"),
-        ("jira_state.md", "# Jira State Ledger\n\n(Populated by Alfred)\n"),
     ]:
         dst = memory_dir / fname
         if not dst.exists():
@@ -423,36 +486,33 @@ def install_files(config):
     return memory_dir
 
 
+TEMPLATE_VAR_KEYS = [
+    "USER_NAME","USER_EMAIL","COMPANY","USER_ROLE","SLACK_USER_ID","SLACK_WORKSPACE_ID",
+    "TIER1_NAME_1","TIER1_TITLE_1","TIER1_NOTE_1","TIER1_NAME_2","TIER1_TITLE_2","TIER1_NOTE_2",
+    "MANAGER_NAME","MANAGER_TITLE","MANAGER_NOTE",
+    "NOFLY_1","NOFLY_2","NOFLY_3","NOFLY_LIST","NOFLY_LIST_MD",
+    "DIRECT_REPORT_1","DIRECT_REPORT_1_TITLE","DIRECT_REPORT_2","DIRECT_REPORT_2_TITLE",
+    "DIRECT_REPORTS_INLINE","DIRECT_REPORTS_LIST","STAKEHOLDERS_LIST",
+    "PRODUCT_NAME","ROLLOUT_DATE","CURRENT_QUARTER","TIMEZONE",
+    "BRIEFS_DIR","BRIEFS_DIR_ESC","MEMORY_DIR","REPO_DIR","HOME_DIR",
+    "MCP_SLACK","MCP_GMAIL","MCP_CALENDAR","MCP_DRIVE","MCP_GRANOLA","MCP_AVAILABLE",
+    "SLACK_SIGNAL_FILTER","INITIATIVE_1_NAME","INITIATIVE_1_DESC",
+    "INITIATIVE_1_METRIC","INITIATIVE_1_DATE","CLAUDE_PROJECT_SEGMENT",
+]
+
 def write_config(config, memory_dir):
     """Save config.json for reference and future re-runs."""
     config_out = {
         "version": "1.0",
         "generated": datetime.now().isoformat(),
         "user": {k: config[k] for k in ["USER_NAME","USER_EMAIL","COMPANY","USER_ROLE","SLACK_USER_ID","SLACK_WORKSPACE_ID"]},
-        "stakeholders": {
-            "tier1": [
-                {"name": config["TIER1_NAME_1"], "title": config["TIER1_TITLE_1"]},
-                {"name": config["TIER1_NAME_2"], "title": config["TIER1_TITLE_2"]},
-            ],
-            "manager": {"name": config["MANAGER_NAME"], "title": config["MANAGER_TITLE"]},
-            "no_fly": [config["TIER1_NAME_1"], config["NOFLY_2"], config["NOFLY_3"]],
-            "direct_reports": [
-                {"name": config["DIRECT_REPORT_1"], "title": config["DIRECT_REPORT_1_TITLE"]},
-                {"name": config["DIRECT_REPORT_2"], "title": config["DIRECT_REPORT_2_TITLE"]},
-            ],
-        },
-        "mcps": {
-            "slack":    config["MCP_SLACK"],
-            "gmail":    config["MCP_GMAIL"],
-            "calendar": config["MCP_CALENDAR"],
-            "drive":    config["MCP_DRIVE"],
-        },
         "paths": {
             "briefs_dir": config["BRIEFS_DIR"],
             "memory_dir": str(memory_dir),
             "repo_dir":   config["REPO_DIR"],
         },
         "timezone": config["TIMEZONE"],
+        "template_vars": {k: config.get(k, "") for k in TEMPLATE_VAR_KEYS},
     }
     CONFIG_PATH.write_text(json.dumps(config_out, indent=2))
     print(f"\n  Config saved → {CONFIG_PATH}")
@@ -509,78 +569,89 @@ def _read_skill(task_name, config):
 
 def generate_finish_prompt(config):
     """Write a prompt file the user pastes into Claude Code to finish setup."""
-    memory_dir = config["MEMORY_DIR"]
-
-    # Read the actual installed (filled) SKILL.md content for each task
-    # so Claude can restore it exactly — no reading from disk needed at runtime
-    morning_skill   = _read_skill("morning-brief",   config)
-    premeet_skill   = _read_skill("pre-meeting-brief", config)
-    friday_skill    = _read_skill("friday-wrap",      config)
-
-    prompt = f"""You are Alfred, the personal AI Chief of Staff. A new user just ran the setup wizard. Complete their installation by doing the following — work through all three tasks in order.
+    home = config["HOME_DIR"]
+    prompt = f"""You are Alfred, the personal AI Chief of Staff. A new user just ran the setup wizard. Complete their installation in two tasks.
 
 **User:** {config["USER_NAME"]} ({config["USER_EMAIL"]})
-**Company:** {config["COMPANY"]}
 **Timezone:** {config["TIMEZONE"]}
 **Briefs directory:** {config["BRIEFS_DIR"]}
-**Memory directory:** {memory_dir}
 
 ---
 
 # Task 1 — Register scheduled tasks
 
-⚠️ CRITICAL: The scheduled task tool OVERWRITES the SKILL.md with just the prompt string. After creating each task you MUST immediately overwrite the SKILL.md with the FULL content provided below. Do not skip this — the full content is embedded here so you never need to read from disk.
+First, check whether the `mcp__scheduled-tasks__create_scheduled_task` tool is available in your current session.
 
-Create three scheduled tasks using mcp__scheduled-tasks__create_scheduled_task:
+---
 
-## 1a — Create morning-brief task
-- cronExpression: `57 7 * * 1-5`
-- prompt: `Read and execute the instructions in {config["HOME_DIR"]}/.claude/scheduled-tasks/morning-brief/SKILL.md`
-- description: `Alfred — morning brief, Mon–Fri 7:57 AM`
+## Path A — if `scheduled-tasks` is available (preferred)
 
-## 1b — Immediately restore morning-brief/SKILL.md
-Write the following content exactly to `{config["HOME_DIR"]}/.claude/scheduled-tasks/morning-brief/SKILL.md`.
-The content is everything between <<<MORNING_SKILL_START>>> and <<<MORNING_SKILL_END>>> below — write it verbatim, preserving all backticks, indentation, and newlines:
+⚠️ `create_scheduled_task` overwrites SKILL.md with a short string. For each task: (1) read the file first, (2) create the task, (3) write the content back immediately.
 
-<<<MORNING_SKILL_START>>>
-{morning_skill}
-<<<MORNING_SKILL_END>>>
+### Morning brief
+1. Read `{home}/.claude/scheduled-tasks/morning-brief/SKILL.md`
+2. Create scheduled task — cronExpression: `57 7 * * 1-5`, prompt: `Read and execute the instructions in {home}/.claude/scheduled-tasks/morning-brief/SKILL.md`, description: `Alfred — morning brief, Mon–Fri 7:57 AM`
+3. Write the content from step 1 back to `{home}/.claude/scheduled-tasks/morning-brief/SKILL.md`
 
-## 2a — Create pre-meeting-brief task
-- cronExpression: `*/10 7-19 * * 1-5`
-- prompt: `Read and execute the instructions in {config["HOME_DIR"]}/.claude/scheduled-tasks/pre-meeting-brief/SKILL.md`
-- description: `Alfred — pre-meeting brief, every 10 min on weekdays`
-- notifyOnCompletion: false
+### Pre-meeting brief
+1. Read `{home}/.claude/scheduled-tasks/pre-meeting-brief/SKILL.md`
+2. Create scheduled task — cronExpression: `*/10 7-19 * * 1-5`, prompt: `Read and execute the instructions in {home}/.claude/scheduled-tasks/pre-meeting-brief/SKILL.md`, description: `Alfred — pre-meeting brief, every 10 min on weekdays`, notifyOnCompletion: false
+3. Write the content from step 1 back to `{home}/.claude/scheduled-tasks/pre-meeting-brief/SKILL.md`
 
-## 2b — Immediately restore pre-meeting-brief/SKILL.md
-Write the following content exactly to `{config["HOME_DIR"]}/.claude/scheduled-tasks/pre-meeting-brief/SKILL.md`.
-The content is everything between <<<PREMEET_SKILL_START>>> and <<<PREMEET_SKILL_END>>>:
+### Friday wrap
+1. Read `{home}/.claude/scheduled-tasks/friday-wrap/SKILL.md`
+2. Create scheduled task — cronExpression: `0 16 * * 5`, prompt: `Read and execute the instructions in {home}/.claude/scheduled-tasks/friday-wrap/SKILL.md`, description: `Alfred — Friday week wrap at 4 PM`, notifyOnCompletion: false
+3. Write the content from step 1 back to `{home}/.claude/scheduled-tasks/friday-wrap/SKILL.md`
 
-<<<PREMEET_SKILL_START>>>
-{premeet_skill}
-<<<PREMEET_SKILL_END>>>
+---
 
-## 3a — Create friday-wrap task
-- cronExpression: `0 16 * * 5`
-- prompt: `Read and execute the instructions in {config["HOME_DIR"]}/.claude/scheduled-tasks/friday-wrap/SKILL.md`
-- description: `Alfred — Friday week wrap at 4 PM`
-- notifyOnCompletion: false
+## Path B — if `scheduled-tasks` is NOT available
 
-## 3b — Immediately restore friday-wrap/SKILL.md
-Write the following content exactly to `{config["HOME_DIR"]}/.claude/scheduled-tasks/friday-wrap/SKILL.md`.
-The content is everything between <<<FRIDAY_SKILL_START>>> and <<<FRIDAY_SKILL_END>>>:
+`scheduled-tasks` is Claude Code's Desktop Scheduled Tasks feature. If it's not injected in your session, the user's Claude Code needs an update.
 
-<<<FRIDAY_SKILL_START>>>
-{friday_skill}
-<<<FRIDAY_SKILL_END>>>
+Tell the user:
+
+> The `scheduled-tasks` tool isn't available in this session — this means Claude Code needs to be updated. Please:
+> 1. Open Claude Code → **Help → Check for Updates** and install any available update
+> 2. Quit and reopen Claude Code
+> 3. Start a **new session** and re-paste this setup prompt
+>
+> After updating, Path A above will work automatically.
+>
+> **Do not use CronCreate as a workaround** — CronCreate tasks expire after 7 days and Alfred will silently stop running.
+
+Do not proceed to Task 2 until the user has confirmed Path A succeeded.
+
+---
+
+# Task 1.5 — Resolve any undetected MCP placeholders
+
+The setup wizard auto-detects MCP tool prefixes, but some Claude Code configurations don't expose them in settings files. Scan these files for any remaining `mcp__REPLACE_` placeholder strings:
+
+- `{home}/.claude/scheduled-tasks/morning-brief/SKILL.md`
+- `{home}/.claude/scheduled-tasks/pre-meeting-brief/SKILL.md`
+- `{home}/.claude/scheduled-tasks/friday-wrap/SKILL.md`
+- `{home}/.claude/commands/alfred.md`
+
+If any `mcp__REPLACE_` strings are present:
+1. Read `{home}/.claude/settings.local.json` and `{home}/.claude/settings.json`
+2. Identify the actual MCP prefix for each service — look for tool entries in `permissions.allow` (e.g. `mcp__UUID__slack_send_message`) and server keys in `mcpServers`
+3. In every affected file, replace:
+   - `mcp__REPLACE_SLACK_ID__` → the detected Slack prefix
+   - `mcp__REPLACE_GMAIL_ID__` → the detected Gmail prefix
+   - `mcp__REPLACE_CALENDAR_ID__` → the detected Google Calendar prefix
+   - `mcp__REPLACE_DRIVE_ID__` → the detected Google Drive prefix
+4. Write the corrected content back to each file
+
+If no `mcp__REPLACE_` strings are found in any file, skip this step entirely.
 
 ---
 
 # Task 2 — Generate first brief
 
-Run the morning brief SKILL.md to generate {config["USER_NAME"]}'s first Alfred brief. Deliver it as HTML to `{config["BRIEFS_DIR"]}` and open it in the browser.
+Read and execute `{home}/.claude/scheduled-tasks/morning-brief/SKILL.md` to generate {config["USER_NAME"]}'s first Alfred brief now.
 
-Confirm when all three tasks are complete.
+Confirm when done.
 """
     out = Path(config["REPO_DIR"]).expanduser() / "setup" / "complete-setup-prompt.txt"
     out.write_text(prompt)

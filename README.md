@@ -8,7 +8,7 @@ Alfred is a personal AI Chief of Staff that runs inside Claude Code. Every morni
 
 | Brief | When | What's in it |
 |-------|------|--------------|
-| **Morning brief** | 7:57 AM, Mon–Fri | Fires, calendar prep, team commitments, Slack drafts, Gmail drafts, Drive mentions, Jira suggestions |
+| **Morning brief** | 7:57 AM, Mon–Fri | Fires, calendar prep, team commitments, Slack drafts, Gmail drafts, Drive mentions, kanban board |
 | **Pre-meeting brief** | 15 min before any Director+ meeting | Granola history, open commitments, Slack context for that person |
 | **Friday wrap** | 4 PM Fridays | Week patterns: repeated slippage, team trends, initiative status |
 | **On-demand queries** | Anytime | Type `/alfred What did I promise [person] this week?` in Claude Code |
@@ -19,7 +19,7 @@ Alfred is a personal AI Chief of Staff that runs inside Claude Code. Every morni
 
 You need four things installed and working before running setup. Budget 20–30 minutes for this part.
 
-### 1. Claude Code
+### 1. Claude Code (must be up to date)
 
 Claude Code is the desktop app Alfred lives inside. Download and install it from:
 
@@ -27,14 +27,18 @@ Claude Code is the desktop app Alfred lives inside. Download and install it from
 
 Open it and sign in with your Anthropic account. If you don't have one, create one at that link.
 
+> **Important:** Alfred uses `scheduled-tasks`, a built-in Claude Code feature that ships with recent versions. Before running setup, make sure Claude Code is fully up to date: open Claude Code → Help → Check for Updates. If `scheduled-tasks` is missing, the finish prompt will fail silently — updating fixes it.
+>
+> To verify it's available: open Claude Code, start a new session, and run `/mcp`. You should see `scheduled-tasks` in the list.
+
 ### 2. The MCP connectors
 
 MCP connectors let Alfred read your real data — Slack, calendar, email, etc. You connect them inside Claude Code's settings.
 
 **How to open MCP settings:**
 1. Open Claude Code
-2. Click the **gear icon** (⚙️) in the bottom-left corner, or press `Cmd + ,`
-3. Go to **Integrations** or **MCP Servers**
+2. Press **Cmd + ,** to open Settings
+3. Go to **MCP Servers** or **Integrations**
 4. Click **Add** for each service below
 
 **Connect these (required):**
@@ -84,19 +88,17 @@ The installer will check your requirements, download Alfred, and launch the setu
 
 ### Step 2 — Answer the wizard questions (~5 minutes)
 
-The wizard will ask you about yourself, your stakeholders, and your team. At the end, it shows you a summary — if anything looks wrong, type `n` and it starts over. Nothing is written to your computer until you confirm.
+The installer opens a browser-based setup wizard. Work through the steps — you can go back and change anything before confirming. Nothing is written to your computer until you click **Install Alfred** on the review screen.
 
-**Questions it will ask:**
+**The wizard covers five steps:**
 
-- Your name, work email, Slack user ID
-- Your key stakeholders (who defines a "fire" for you)
-- Your manager and direct reports
-- The main product or initiative Alfred should track
-- Your timezone and where to save your daily briefs
+1. **You** — name, work email, role, Slack user ID
+2. **People** — your manager, key stakeholders, calendar no-fly list
+3. **Team** — direct reports Alfred tracks commitments for
+4. **Goals** — your main initiative, target date, milestones
+5. **Timezone & save location** — when and where briefs are delivered
 
 > **Finding your Slack user ID:** Open Slack → click your profile photo → click "Profile" → click the three dots `···` → "Copy member ID". It starts with the letter `U`.
-
-> **Finding your Slack workspace ID:** In Slack, click your workspace name in the top-left → "Settings & administration" → "Workspace settings" — the ID starts with `T` and appears in the URL bar.
 
 ### Step 3 — Paste into Claude Code
 
@@ -166,7 +168,7 @@ The morning brief opens as a single HTML page in your browser. Here's what each 
 - **🤝 Team Commitments** — what your direct reports committed to and their current status
 - **📡 Product Signals** — wins, capability gaps, strategy signals from Slack about your main initiative
 - **📄 Drive Mentions** — docs where you were @-mentioned in the last 7 days
-- **🎫 Jira** — tickets Alfred thinks should be created, moved to In Progress, or closed
+- **📋 Board** — an interactive kanban (To-Do / In Progress / Done) Alfred maintains alongside your brief. Alfred suggests new cards from signals each run and flags when In Progress items look complete.
 
 ---
 
@@ -200,20 +202,26 @@ After setup, Alfred created memory files that describe you, your context, and yo
 
 ## Troubleshooting
 
+**The finish-setup prompt says `scheduled-tasks` isn't available**
+- `scheduled-tasks` is Claude Code's Desktop Scheduled Tasks feature — it should be present in any recent version
+- Open Claude Code → **Help → Check for Updates**, install the update, quit and reopen, then start a new session and re-paste the finish prompt
+- Do not use CronCreate as a workaround — those tasks expire after 7 days and Alfred will silently stop
+- To confirm the tool is available after updating: start a new session and the finish prompt will detect it automatically
+
 **Alfred didn't generate a brief at 7:57 AM**
 - Make sure Claude Code is open in the background — Alfred's scheduled tasks only run when Claude Code is running
 - Run the verifier to check task registration: `python3 ~/alfred-repo/setup/verify.py`
 - Re-run the finish-setup prompt in a new Claude Code session if tasks are missing
 
 **An MCP tool shows a red dot or isn't working**
-- Disconnect and reconnect it in Claude Code Settings → Integrations
+- Disconnect and reconnect it in Claude Code Settings (Cmd + ,) → MCP Servers
 - Re-authorize with your Google or Slack account
 - Re-run the verifier after reconnecting
 
 **The brief opened but some sections are empty**
 - Alfred only shows sections with real data — an empty Fires section means no fires, which is good
 - If Granola sections are empty, make sure the Granola MCP is connected and you've had meetings this week
-7. Re-run `python3 ~/alfred-repo/setup/verify.py` to confirm
+- Re-run `python3 ~/alfred-repo/setup/verify.py` to confirm
 
 **Notepad isn't working**
 - The in-brief notepad only works in Chrome. If you use Safari or Firefox, all other brief sections work normally
@@ -227,9 +235,9 @@ After setup, Alfred created memory files that describe you, your context, and yo
 
 **Re-running setup (if you change MCP connections or want to reconfigure)**
 ```bash
-python3 ~/alfred-repo/setup/alfred-setup.py
+python3 ~/alfred-repo/setup/alfred-setup-ui.py
 ```
-Your calibrations, last brief state, and Jira ledger are preserved — only the config is updated.
+Your calibrations, last brief state, and delivered items archive are preserved — only the config is updated.
 
 ---
 

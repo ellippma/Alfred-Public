@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Alfred — one-line installer
-# Usage: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/ellippma/Alfred/main/setup/install.sh)"
+# Usage: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/ellippma/Alfred-Public/main/setup/install.sh)"
 #
 
 set -e

@@ -43,7 +43,7 @@ if CONFIG_PATH.exists():
         print(f"\n  ⚠️  Config file exists but couldn't be parsed: {CONFIG_PATH}")
 else:
     print(f"\n  ❌  Config file not found at {CONFIG_PATH}")
-    print("     Run the setup wizard first: python3 ~/alfred-repo/setup/alfred-setup.py")
+    print("     Run the setup wizard first: python3 ~/alfred-repo/setup/alfred-setup-ui.py")
     sys.exit(1)
 
 briefs_dir  = Path(config.get("paths", {}).get("briefs_dir", ""))
@@ -58,11 +58,11 @@ check("Config file exists",          CONFIG_PATH.exists())
 check("Briefs directory exists",     briefs_dir.is_dir(),
       f"Create it: mkdir -p \"{briefs_dir}\"")
 check("alfred-build.py installed",   (briefs_dir / "alfred-build.py").exists(),
-      f"Re-run setup: python3 {repo_dir}/setup/alfred-setup.py")
+      f"Re-run setup: python3 {repo_dir}/setup/alfred-setup-ui.py")
 check("alfred-template.html installed", (briefs_dir / "alfred-template.html").exists(),
-      f"Re-run setup: python3 {repo_dir}/setup/alfred-setup.py")
+      f"Re-run setup: python3 {repo_dir}/setup/alfred-setup-ui.py")
 check("read-notepad.py installed",   (briefs_dir / "read-notepad.py").exists(),
-      f"Re-run setup: python3 {repo_dir}/setup/alfred-setup.py")
+      f"Re-run setup: python3 {repo_dir}/setup/alfred-setup-ui.py")
 
 test_file = briefs_dir / ".alfred-write-test"
 try:
@@ -99,12 +99,12 @@ section("3 / 4  Memory files")
 required_memory = [
     "MEMORY.md", "user_role.md", "stakeholders.md", "calibrations.md",
     "feedback_blindspots.md", "project_q2_initiatives.md",
-    "project_personal_cos.md", "last_brief.md", "jira_state.md",
+    "project_personal_cos.md", "last_brief.md", "milestones.md", "delivered.md",
 ]
 for fname in required_memory:
     fpath = memory_dir / fname
     check(f"{fname}", fpath.exists(),
-          f"Re-run setup: python3 {repo_dir}/setup/alfred-setup.py")
+          f"Re-run setup: python3 {repo_dir}/setup/alfred-setup-ui.py")
 
 # Check for unfilled placeholders in memory files
 placeholder_files = []
@@ -117,15 +117,16 @@ check("No unfilled placeholders in memory files", len(placeholder_files) == 0,
       "Re-run the finish-setup prompt, or edit the files manually.")
 
 # ── Section 4: Slash command ──────────────────────────────────────────────────
-section("4 / 4  Slash command")
+section("4 / 4  Slash commands")
 
-alfred_cmd = CLAUDE_DIR / "commands" / "alfred.md"
-check("/alfred command installed", alfred_cmd.exists(),
-      f"Re-run setup: python3 {repo_dir}/setup/alfred-setup.py")
-if alfred_cmd.exists():
-    cmd_text = alfred_cmd.read_text()
-    check("/alfred command has no unfilled placeholders", "{{" not in cmd_text,
-          f"Re-run setup: python3 {repo_dir}/setup/alfred-setup.py")
+for cmd_name in ["alfred", "alfred-config"]:
+    cmd_path = CLAUDE_DIR / "commands" / f"{cmd_name}.md"
+    check(f"/{cmd_name} command installed", cmd_path.exists(),
+          f"Re-run setup: python3 {repo_dir}/setup/alfred-setup-ui.py")
+    if cmd_path.exists():
+        cmd_text = cmd_path.read_text()
+        check(f"/{cmd_name} has no unfilled placeholders", "{{" not in cmd_text,
+              f"Re-run setup: python3 {repo_dir}/setup/alfred-setup-ui.py")
 
 # ── Summary ───────────────────────────────────────────────────────────────────
 print(f"\n  {'═'*44}")

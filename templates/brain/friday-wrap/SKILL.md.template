@@ -12,7 +12,7 @@ Read all memory files:
 - `{{MEMORY_DIR}}/stakeholders.md`
 - `{{MEMORY_DIR}}/last_brief.md`
 - `{{MEMORY_DIR}}/calibrations.md`
-- `{{MEMORY_DIR}}/jira_state.md`
+- `{{MEMORY_DIR}}/delivered.md`
 - `{{MEMORY_DIR}}/project_q2_initiatives.md`
 
 # Step 2 — Pull week data (Mon–Fri)

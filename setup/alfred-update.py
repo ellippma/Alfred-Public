@@ -177,12 +177,13 @@ def main():
             else:
                 warn(f"Template not found for {task} — skipped")
 
-        # ── Re-render slash command ───────────────────────────────────────
-        info("Updating /alfred command…")
-        cmd_src = repo_dir / "templates" / "commands" / "alfred.md.template"
-        if cmd_src.exists():
-            install_template(cmd_src, CLAUDE_DIR / "commands" / "alfred.md", tvars)
-            ok("/alfred command")
+        # ── Re-render slash commands ──────────────────────────────────────
+        info("Updating /alfred commands…")
+        for cmd in ["alfred", "alfred-config"]:
+            cmd_src = repo_dir / "templates" / "commands" / f"{cmd}.md.template"
+            if cmd_src.exists():
+                install_template(cmd_src, CLAUDE_DIR / "commands" / f"{cmd}.md", tvars)
+                ok(f"/{cmd} command")
 
     # ── Update permissions ────────────────────────────────────────────────
     info("Checking permissions…")

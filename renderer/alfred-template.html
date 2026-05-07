@@ -334,20 +334,79 @@
   }
   .metric-body { font-size: 13px; font-weight: 700; flex: 1; line-height: 1.7; }
 
-  /* ── Jira ────────────────────────────────────────────────────────── */
-  .jira-subsection { margin-bottom: 16px; }
-  .jira-subsection-title {
-    font-family: 'Bangers', cursive; font-size: 17px; letter-spacing: 0.08em; margin-bottom: 8px;
+  /* ── Kanban Board ────────────────────────────────────────────────── */
+  .kanban-board { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 8px; }
+  .kanban-col {
+    background: var(--white); border: 3px solid var(--black);
+    box-shadow: 4px 4px 0 var(--black); display: flex; flex-direction: column;
   }
-  .jira-ticket {
-    background: var(--white); border: 2px solid var(--black);
-    box-shadow: 3px 3px 0 var(--black); padding: 11px 14px; margin-bottom: 8px; font-size: 13px;
+  .kanban-col-hdr {
+    font-family: 'Bangers', cursive; font-size: 15px; letter-spacing: 0.08em;
+    padding: 7px 10px; border-bottom: 3px solid var(--black);
+    display: flex; align-items: center; justify-content: space-between;
   }
-  .jira-ticket .ticket-title { font-weight: 700; margin-bottom: 4px; }
-  .jira-ticket .ticket-desc  { font-size: 12px; color: #555; line-height: 1.55; }
-  .jira-create   { border-left: 5px solid var(--orange); }
-  .jira-progress { border-left: 5px solid var(--blue); }
-  .jira-done     { border-left: 5px solid var(--green); }
+  .col-todo       .kanban-col-hdr { background: var(--blue);   color: var(--white); }
+  .col-inprogress .kanban-col-hdr { background: var(--orange); color: var(--white); }
+  .col-done       .kanban-col-hdr { background: var(--green);  color: var(--white); }
+  .kanban-count {
+    background: rgba(0,0,0,0.22); color: var(--white);
+    font-size: 11px; font-weight: 700; font-family: 'Comic Neue', cursive;
+    padding: 1px 7px; border-radius: 9px;
+  }
+  .kanban-cards { flex: 1; padding: 6px; display: flex; flex-direction: column; gap: 6px; min-height: 64px; }
+  .kanban-cards.drag-over { background: rgba(0,56,192,0.07); outline: 2px dashed var(--blue); outline-offset: -3px; }
+  .kb-card {
+    background: var(--cream); border: 2px solid var(--black);
+    box-shadow: 2px 2px 0 var(--black); padding: 7px 8px 7px 8px;
+    cursor: grab; position: relative; user-select: none;
+  }
+  .kb-card:active { cursor: grabbing; }
+  .kb-card.dragging { opacity: 0.4; transform: rotate(1.5deg); box-shadow: 5px 5px 0 var(--black); }
+  .kb-card-title  { font-weight: 700; font-size: 12px; line-height: 1.4; padding-right: 34px; }
+  .kb-card-desc   { font-size: 11px; color: #555; margin-top: 3px; line-height: 1.4; }
+  .kb-card-source { font-size: 10px; color: #999; margin-top: 4px; font-style: italic; }
+  .kb-card-actions { position: absolute; top: 5px; right: 5px; display: flex; gap: 1px; }
+  .kb-card-btn {
+    background: none; border: none; cursor: pointer;
+    font-size: 13px; color: #bbb; padding: 0 2px; line-height: 1;
+  }
+  .kb-card-btn:hover { color: var(--red); }
+  .kanban-add-btn {
+    font-family: 'Comic Neue', cursive; font-size: 11px; font-weight: 700;
+    color: #bbb; background: none; border: 2px dashed #ccc;
+    padding: 5px 4px; margin: 5px; cursor: pointer; text-align: center;
+  }
+  .kanban-add-btn:hover { border-color: var(--black); color: var(--black); }
+  .kb-footer { margin-top: 10px; display: flex; align-items: center; gap: 10px; }
+  .kb-save-btn {
+    font-family: 'Bangers', cursive; font-size: 14px; letter-spacing: 0.06em;
+    background: var(--blue); color: var(--white);
+    border: 2px solid var(--black); box-shadow: 3px 3px 0 var(--black);
+    padding: 3px 14px; cursor: pointer;
+  }
+  .kb-save-btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--black); }
+  .kb-status { font-size: 12px; font-weight: 700; }
+  .kb-status.ok { color: var(--green); }
+  .kb-ack {
+    font-size: 12px; font-weight: 700; color: #555; padding: 6px 10px; margin-bottom: 8px;
+    background: var(--white); border: 2px solid var(--black); box-shadow: 2px 2px 0 var(--black);
+  }
+  .kb-add-form { background: #f5f5e8; border: 2px solid var(--black); padding: 7px; margin: 0 6px 6px; }
+  .kb-add-form input, .kb-add-form textarea {
+    width: 100%; border: 2px solid #bbb; padding: 3px 5px;
+    font-family: 'Comic Neue', cursive; font-size: 12px; margin-bottom: 4px; background: var(--white);
+  }
+  .kb-add-form input:focus, .kb-add-form textarea:focus { border-color: var(--black); outline: none; }
+  .kb-add-form textarea { resize: none; }
+  .kb-form-btns { display: flex; gap: 5px; }
+  .kb-form-add {
+    font-family: 'Bangers', cursive; font-size: 13px; letter-spacing: 0.04em;
+    background: var(--black); color: var(--yellow); border: none; padding: 2px 10px; cursor: pointer;
+  }
+  .kb-form-cancel {
+    font-family: 'Comic Neue', cursive; font-size: 12px; font-weight: 700;
+    background: none; color: #888; border: 2px solid #ccc; padding: 1px 8px; cursor: pointer;
+  }
 
   a { color: var(--blue); font-weight: 700; text-decoration: none; }
   a:hover { color: var(--red); text-decoration: underline; }
@@ -772,11 +831,6 @@
     <div class="section-body">{{MILESTONES_SECTION}}</div>
   </section>
 
-  <section id="s-elixir">
-    <div class="section-title">📡 ELIXIR SIGNALS! <span class="section-chevron">▾</span></div>
-    <div class="section-body">{{ELIXIR_SIGNALS}}</div>
-  </section>
-
   <section id="s-drive">
     <div class="section-title">📄 DRIVE @-MENTIONS! <span class="section-chevron">▾</span></div>
     <div class="section-body"><div class="card">{{DRIVE_MENTIONS}}</div></div>
@@ -788,17 +842,43 @@
       <div class="metrics-card">
         <div class="metric">
           <div class="metric-number">{{ROLLOUT_DAYS}}</div>
-          <div class="label">Days to July 1!</div>
+          <div class="label">Days to {{ROLLOUT_DAYS_LABEL}}!</div>
         </div>
         <div class="metric-body">
-          CRO directive: "60 days, everyone in revenue using Elixir!"<br>
           {{ROLLOUT_NOTE}}
         </div>
       </div>
     </div>
   </section>
 
-  {{JIRA_SECTION}}
+  <section id="s-kanban">
+    <div class="section-title">📋 BOARD</div>
+    <div class="section-body">
+      <div id="kb-ack" class="kb-ack" style="display:none"></div>
+      <div class="kanban-board">
+        <div class="kanban-col col-todo" ondragover="kbDragOver(event)" ondrop="kbDrop(event,'todo')">
+          <div class="kanban-col-hdr">TO-DO <span class="kanban-count" id="kbc-todo">0</span></div>
+          <div class="kanban-cards" id="kbcards-todo"></div>
+          <button class="kanban-add-btn" onclick="kbShowAdd('todo')">+ Add card</button>
+        </div>
+        <div class="kanban-col col-inprogress" ondragover="kbDragOver(event)" ondrop="kbDrop(event,'inprogress')">
+          <div class="kanban-col-hdr">IN PROGRESS <span class="kanban-count" id="kbc-inprogress">0</span></div>
+          <div class="kanban-cards" id="kbcards-inprogress"></div>
+          <button class="kanban-add-btn" onclick="kbShowAdd('inprogress')">+ Add card</button>
+        </div>
+        <div class="kanban-col col-done" ondragover="kbDragOver(event)" ondrop="kbDrop(event,'done')">
+          <div class="kanban-col-hdr">DONE <span class="kanban-count" id="kbc-done">0</span></div>
+          <div class="kanban-cards" id="kbcards-done"></div>
+          <button class="kanban-add-btn" onclick="kbShowAdd('done')">+ Add card</button>
+        </div>
+      </div>
+      <div class="kb-footer">
+        <button class="kb-save-btn" onclick="kbSave()">SAVE TO ALFRED ↓</button>
+        <span class="kb-status" id="kb-status"></span>
+      </div>
+    </div>
+  </section>
+  <script id="kb-data" type="application/json">{{KANBAN_JSON}}</script>
 
 
 </div>
@@ -1205,7 +1285,7 @@
     const el   = document.getElementById('fb-history');
     if (!hist.length) { el.innerHTML = ''; return; }
     el.innerHTML = '<div class="feedback-history-ttl">RECENT FEEDBACK</div>' +
-      hist.map(h => `<div class="feedback-history-item">${npEsc(h.category)} — ${npEsc(h.text)}</div>`).join('');
+      hist.map(h => `<div class="feedback-history-item">${mpEsc(h.category)} — ${mpEsc(h.text)}</div>`).join('');
   }
   function submitFb() {
     const cat  = document.getElementById('fb-cat').value;
@@ -1229,6 +1309,203 @@
     setFbStatus('ok','✅ Downloaded — Alfred picks it up on next brief run.');
     renderFbHistory();
   }
+
+  // ── Kanban Board ──────────────────────────────────────────────────────────
+  const KB_KEY    = 'alfred-kanban-v1';
+  const KB_TS_KEY = 'alfred-kanban-ts';
+  let kbCards  = [];
+  let kbDragId = null;
+
+  function kbGenId() { return 'kb-' + Math.random().toString(36).slice(2, 9); }
+  function kbToday() { return new Date().toISOString().split('T')[0]; }
+  function kbEsc(s)  { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function kbPersist() { localStorage.setItem(KB_KEY, JSON.stringify(kbCards)); }
+
+  function kbInit() {
+    // Parse Alfred's data blob
+    let alfredData = {};
+    try { alfredData = JSON.parse(document.getElementById('kb-data').textContent || '{}'); } catch(e) {}
+
+    const boardState  = alfredData.board_state  || null;
+    const boardTs     = alfredData.board_state_ts || 0;
+    const newTodo     = alfredData.new_todo     || [];
+    const ack         = alfredData.acknowledgement || '';
+
+    // Decide authoritative source: Alfred's processed state wins if newer
+    const localTs = parseInt(localStorage.getItem(KB_TS_KEY) || '0', 10);
+    if (boardState && boardTs > localTs) {
+      kbCards = boardState.cards || [];
+      localStorage.setItem(KB_TS_KEY, String(boardTs));
+      kbPersist();
+    } else {
+      try { kbCards = JSON.parse(localStorage.getItem(KB_KEY) || '[]'); } catch(e) { kbCards = []; }
+    }
+
+    // Always merge Alfred's new_todo suggestions (deduped by id)
+    const existingIds = new Set(kbCards.map(function(c){ return c.id; }));
+    newTodo.forEach(function(card) {
+      if (!existingIds.has(card.id)) {
+        kbCards.push({ id: card.id || kbGenId(), title: card.title, description: card.description || '',
+          source_signal: card.source_signal || '', col: 'todo', source: 'alfred', added: kbToday() });
+        existingIds.add(card.id);
+      }
+    });
+    kbPersist();
+
+    // Show acknowledgement
+    if (ack) {
+      var el = document.getElementById('kb-ack');
+      if (el) { el.textContent = ack; el.style.display = ''; }
+    }
+
+    kbRender();
+  }
+
+  function kbRender() {
+    ['todo','inprogress','done'].forEach(function(col) {
+      var container = document.getElementById('kbcards-' + col);
+      var counter   = document.getElementById('kbc-' + col);
+      if (!container) return;
+      var cards = kbCards.filter(function(c){ return c.col === col; });
+      counter.textContent = cards.length;
+      container.innerHTML = '';
+      cards.forEach(function(card) { container.appendChild(kbMakeCard(card)); });
+    });
+  }
+
+  function kbMakeCard(card) {
+    var div = document.createElement('div');
+    div.className = 'kb-card';
+    div.dataset.id = card.id;
+    div.draggable = true;
+    div.addEventListener('dragstart', function(e) {
+      kbDragId = card.id;
+      setTimeout(function(){ div.classList.add('dragging'); }, 0);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    div.addEventListener('dragend', function() {
+      div.classList.remove('dragging');
+      kbDragId = null;
+      document.querySelectorAll('.kanban-cards').forEach(function(c){ c.classList.remove('drag-over'); });
+    });
+    var descHtml   = card.description   ? '<div class="kb-card-desc">'   + kbEsc(card.description)   + '</div>' : '';
+    var sourceHtml = card.source_signal ? '<div class="kb-card-source">' + kbEsc(card.source_signal) + '</div>' : '';
+    div.innerHTML =
+      '<div class="kb-card-actions">' +
+        '<button class="kb-card-btn" onclick="kbEdit(\'' + card.id + '\')" title="Edit">✏️</button>' +
+        '<button class="kb-card-btn" onclick="kbDelete(\'' + card.id + '\')" title="Delete">×</button>' +
+      '</div>' +
+      '<div class="kb-card-title">' + kbEsc(card.title) + '</div>' +
+      descHtml + sourceHtml;
+    return div;
+  }
+
+  function kbDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    var cards = e.currentTarget.querySelector('.kanban-cards');
+    if (cards) cards.classList.add('drag-over');
+  }
+
+  function kbDrop(e, col) {
+    e.preventDefault();
+    document.querySelectorAll('.kanban-cards').forEach(function(c){ c.classList.remove('drag-over'); });
+    if (!kbDragId) return;
+    var card = kbCards.find(function(c){ return c.id === kbDragId; });
+    if (card) {
+      card.col = col;
+      if (col === 'done' && !card.moved_done) card.moved_done = kbToday();
+    }
+    kbPersist();
+    kbRender();
+  }
+
+  function kbShowAdd(col) {
+    document.querySelectorAll('.kb-add-form').forEach(function(f){ f.remove(); });
+    var container = document.getElementById('kbcards-' + col);
+    var form = document.createElement('div');
+    form.className = 'kb-add-form';
+    form.innerHTML =
+      '<input type="text" id="kb-new-title" placeholder="Card title" autocomplete="off">' +
+      '<textarea id="kb-new-desc" rows="2" placeholder="Description (optional)"></textarea>' +
+      '<div class="kb-form-btns">' +
+        '<button class="kb-form-add" onclick="kbAddCard(\'' + col + '\')">ADD ↓</button>' +
+        '<button class="kb-form-cancel" onclick="document.querySelectorAll(\'.kb-add-form\').forEach(function(f){f.remove();})">Cancel</button>' +
+      '</div>';
+    container.appendChild(form);
+    var titleEl = form.querySelector('#kb-new-title');
+    titleEl.focus();
+    titleEl.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kbAddCard(col); }
+      if (e.key === 'Escape') document.querySelectorAll('.kb-add-form').forEach(function(f){f.remove();});
+    });
+  }
+
+  function kbAddCard(col) {
+    var titleEl = document.getElementById('kb-new-title');
+    var descEl  = document.getElementById('kb-new-desc');
+    var title   = titleEl ? titleEl.value.trim() : '';
+    if (!title) { if (titleEl) titleEl.style.borderColor = 'var(--red)'; return; }
+    kbCards.push({ id: kbGenId(), title: title,
+      description: descEl ? descEl.value.trim() : '', source_signal: '',
+      col: col, source: 'manual', added: kbToday(),
+      moved_done: col === 'done' ? kbToday() : null });
+    document.querySelectorAll('.kb-add-form').forEach(function(f){ f.remove(); });
+    kbPersist(); kbRender();
+  }
+
+  function kbDelete(id) {
+    if (!confirm('Delete this card?')) return;
+    kbCards = kbCards.filter(function(c){ return c.id !== id; });
+    kbPersist(); kbRender();
+  }
+
+  function kbEdit(id) {
+    var card   = kbCards.find(function(c){ return c.id === id; });
+    var cardEl = document.querySelector('.kb-card[data-id="' + id + '"]');
+    if (!card || !cardEl) return;
+    cardEl.innerHTML =
+      '<input type="text" id="kb-edit-title" value="' + kbEsc(card.title) + '" style="width:100%;border:2px solid var(--black);padding:3px 5px;font-family:\'Comic Neue\',cursive;font-size:12px;margin-bottom:4px">' +
+      '<textarea id="kb-edit-desc" rows="2" style="width:100%;border:2px solid var(--black);padding:3px 5px;font-family:\'Comic Neue\',cursive;font-size:12px;resize:none;margin-bottom:4px">' + kbEsc(card.description) + '</textarea>' +
+      '<div class="kb-form-btns">' +
+        '<button class="kb-form-add" onclick="kbSaveEdit(\'' + id + '\')">SAVE</button>' +
+        '<button class="kb-form-cancel" onclick="kbRender()">Cancel</button>' +
+      '</div>';
+    var titleEl = cardEl.querySelector('#kb-edit-title');
+    titleEl.focus(); titleEl.select();
+    titleEl.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kbSaveEdit(id); }
+      if (e.key === 'Escape') kbRender();
+    });
+  }
+
+  function kbSaveEdit(id) {
+    var card    = kbCards.find(function(c){ return c.id === id; });
+    var titleEl = document.getElementById('kb-edit-title');
+    var descEl  = document.getElementById('kb-edit-desc');
+    if (!card || !titleEl) return;
+    var title = titleEl.value.trim();
+    if (!title) return;
+    card.title       = title;
+    card.description = descEl ? descEl.value.trim() : '';
+    kbPersist(); kbRender();
+  }
+
+  function kbSave() {
+    var payload = JSON.stringify({ cards: kbCards, saved_at: new Date().toISOString() }, null, 2);
+    var blob = new Blob([payload], { type: 'application/json' });
+    var url  = URL.createObjectURL(blob);
+    var a = Object.assign(document.createElement('a'), { href: url, download: 'alfred-pending-board.json' });
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+    var st = document.getElementById('kb-status');
+    st.textContent = '✅ Downloaded — Alfred archives Done items and updates on next brief run.';
+    st.className = 'kb-status ok';
+    setTimeout(function(){ st.textContent = ''; st.className = 'kb-status'; }, 6000);
+  }
+
+  kbInit();
   function setFbStatus(type, msg) {
     const el = document.getElementById('fb-status');
     el.textContent = msg; el.className = 'feedback-status ' + type;
@@ -1238,7 +1515,7 @@
 
 <!-- Keep-open footer -->
 <div style="margin-top:48px; padding:10px 16px; border:2px solid var(--black); background:var(--white); box-shadow:3px 3px 0 var(--black); font-size:11px; font-weight:700; color:#555; text-align:center;">
-  🦇 Alfred runs inside <strong>Claude Code</strong> — keep it open in the background for scheduled briefs. &nbsp;|&nbsp; Notepad requires Chrome. &nbsp;|&nbsp; <a href="https://github.com/ellippma/Alfred" target="_blank" style="color:var(--blue);">ellippma/Alfred</a>
+  🦇 Alfred runs inside <strong>Claude Code</strong> — keep it open in the background for scheduled briefs. &nbsp;|&nbsp; Notepad requires Chrome. &nbsp;|&nbsp; <a href="https://github.com/ellippma/Alfred-Public" target="_blank" style="color:var(--blue);">ellippma/Alfred-Public</a>
 </div>
 </body>
 </html>
