@@ -150,13 +150,23 @@ def run_install(raw, emit):
         "NOFLY_1":               nofly[0] if len(nofly) > 0 else "",
         "NOFLY_2":               nofly[1] if len(nofly) > 1 else "",
         "NOFLY_3":               nofly[2] if len(nofly) > 2 else "",
-        "NOFLY_LIST":            ", ".join(nofly),
+        "NOFLY_LIST":            ", ".join(nofly) if nofly else "",
+        "NOFLY_LIST_MD":         "\n".join(f"- {e}" for e in nofly) if nofly else "- (none set)",
         "DIRECT_REPORT_1":       drs[0].get("name", "") if drs else "",
         "DIRECT_REPORT_1_TITLE": drs[0].get("title", "") if drs else "",
         "DIRECT_REPORT_1_NOTE":  drs[0].get("note", "") if drs else "",
         "DIRECT_REPORT_2":       drs[1].get("name", "") if len(drs) > 1 else "",
         "DIRECT_REPORT_2_TITLE": drs[1].get("title", "") if len(drs) > 1 else "",
         "DIRECT_REPORT_2_NOTE":  drs[1].get("note", "") if len(drs) > 1 else "",
+        "STAKEHOLDERS_LIST":     "\n".join(
+            f"- **{s.get('name','')}** — {s.get('title','')}. {s.get('note','')}"
+            for s in stk if s.get("name")
+        ) or "- (none set)",
+        "DIRECT_REPORTS_LIST":   "\n".join(
+            f"- **{d.get('name','')}** — {d.get('title','')}. {d.get('note','')} Track commitments closely."
+            for d in drs if d.get("name")
+        ) or "- (none set)",
+        "DIRECT_REPORTS_INLINE": " + ".join(d.get("name", "") for d in drs if d.get("name")) or "team",
         "PRODUCT_NAME":          product,
         "ROLLOUT_DATE":          "",
         "CURRENT_QUARTER":       quarter,

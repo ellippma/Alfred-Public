@@ -6,8 +6,7 @@ type: user
 
 # Tier 1 — Always respond immediately (fire definition anchors here)
 
-- **{{TIER1_NAME_1}}** — {{TIER1_TITLE_1}}. {{TIER1_NOTE_1}}
-- **{{TIER1_NAME_2}}** — {{TIER1_TITLE_2}}. {{TIER1_NOTE_2}}
+{{STAKEHOLDERS_LIST}}
 
 # Manager
 
@@ -15,15 +14,12 @@ type: user
 
 # No-fly list (never auto-book calendar invites)
 
-- {{TIER1_NAME_1}}
-- {{NOFLY_2}}
-- {{NOFLY_3}}
-All C-suite go through their EAs.
+{{NOFLY_LIST_MD}}
+All go through their EAs or require manual scheduling.
 
 # Direct reports / key peers
 
-- **{{DIRECT_REPORT_1}}** — {{DIRECT_REPORT_1_TITLE}}. Track commitments closely.
-- **{{DIRECT_REPORT_2}}** — {{DIRECT_REPORT_2_TITLE}}. Track commitments closely.
+{{DIRECT_REPORTS_LIST}}
 
 # Director+ rule
 
