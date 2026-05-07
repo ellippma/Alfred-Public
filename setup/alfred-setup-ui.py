@@ -742,7 +742,10 @@ function stepContent(i) {
       return `<h2>Before we start</h2>
         <p class="desc">Alfred needs a few apps connected in Claude Code. Check the status below — if anything required is missing, go to Claude Code Settings &rarr; Integrations &rarr; MCP Servers first, then refresh this page.</p>
         ${mcpPanel()}
-        <div style="font-size:13px;color:#6e6e73;line-height:1.55">
+        <div style="font-size:13px;color:#6e6e73;line-height:1.55;margin-top:12px">
+          <strong>Also required: Git.</strong> If you don&rsquo;t have Git installed, the installer will detect this and prompt macOS to install it automatically — just follow the pop-up.
+        </div>
+        <div style="font-size:13px;color:#6e6e73;line-height:1.55;margin-top:8px">
           Once required connections show <span style="color:#34c759">Connected</span>, click <strong>Get Started</strong>.
         </div>`;
 
