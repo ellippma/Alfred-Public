@@ -261,7 +261,7 @@ def r_milestones(milestones):
 
 
 def _check_update():
-    """Returns (update_available: bool, latest_version: str)."""
+    """Returns (update_available: bool, latest_version: str, repo_dir: Path)."""
     try:
         cfg_path = Path.home() / ".alfred-config.json"
         installed = "0.0.0"
@@ -277,9 +277,9 @@ def _check_update():
             latest = repo_ver_path.read_text().strip()
         else:
             latest = installed
-        return latest != installed, latest
+        return latest != installed, latest, repo_dir
     except Exception:
-        return False, ""
+        return False, "", Path.home() / "alfred-repo"
 
 
 def r_jira(jira):
@@ -357,7 +357,7 @@ def build():
     milestones_hidden = "" if milestones_html else 'style="display:none"'
     milestones_json = json.dumps(milestones).replace("</", "<\\/")
 
-    update_avail, latest_ver = _check_update()
+    update_avail, latest_ver, repo_dir = _check_update()
     # Alfred may also pass update info via alfred-data.json (from SKILL.md version check)
     if data.get("update_available"):
         update_avail = True
@@ -397,6 +397,7 @@ def build():
         "MILESTONES_JSON":     milestones_json,
         "UPDATE_HIDDEN":       update_hidden,
         "LATEST_VERSION":      esc(latest_ver),
+        "UPDATE_CMD":          f"cd {repo_dir} && git pull && python3 {repo_dir}/setup/alfred-update.py",
     }
 
     for key, val in slots.items():

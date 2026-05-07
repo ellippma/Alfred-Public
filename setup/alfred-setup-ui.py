@@ -291,12 +291,25 @@ def run_install(raw, emit):
     if ver_file.exists():
         installed_version = ver_file.read_text().strip()
 
+    TEMPLATE_VAR_KEYS = [
+        "USER_NAME","USER_EMAIL","COMPANY","USER_ROLE","SLACK_USER_ID","SLACK_WORKSPACE_ID",
+        "TIER1_NAME_1","TIER1_TITLE_1","TIER1_NOTE_1","TIER1_NAME_2","TIER1_TITLE_2","TIER1_NOTE_2",
+        "MANAGER_NAME","MANAGER_TITLE","MANAGER_NOTE",
+        "NOFLY_1","NOFLY_2","NOFLY_3","NOFLY_LIST","NOFLY_LIST_MD",
+        "DIRECT_REPORT_1","DIRECT_REPORT_2","DIRECT_REPORTS_INLINE","DIRECT_REPORTS_LIST",
+        "STAKEHOLDERS_LIST","PRODUCT_NAME","CURRENT_QUARTER","TIMEZONE",
+        "BRIEFS_DIR","BRIEFS_DIR_ESC","MEMORY_DIR","REPO_DIR","HOME_DIR",
+        "MCP_SLACK","MCP_GMAIL","MCP_CALENDAR","MCP_DRIVE","MCP_GRANOLA","MCP_AVAILABLE",
+        "SLACK_SIGNAL_FILTER","INITIATIVE_1_NAME","INITIATIVE_1_DESC",
+        "INITIATIVE_1_METRIC","INITIATIVE_1_DATE","CLAUDE_PROJECT_SEGMENT",
+    ]
     config_out = {
         "version": installed_version,
         "generated": datetime.now().isoformat(),
         "user": {k: config[k] for k in ["USER_NAME","USER_EMAIL","COMPANY","USER_ROLE","SLACK_USER_ID","SLACK_WORKSPACE_ID"]},
         "paths": {"briefs_dir": briefs_dir, "memory_dir": str(memory_dir), "repo_dir": repo_dir},
         "timezone": config["TIMEZONE"],
+        "template_vars": {k: config.get(k, "") for k in TEMPLATE_VAR_KEYS},
     }
     CONFIG_PATH.write_text(json.dumps(config_out, indent=2))
     emit("✓ Config saved", "ok")
