@@ -167,6 +167,7 @@ def run_install(raw, emit):
             for d in drs if d.get("name")
         ) or "- (none set)",
         "DIRECT_REPORTS_INLINE": " + ".join(d.get("name", "") for d in drs if d.get("name")) or "team",
+        "MILESTONES_LIST":        "<!-- No milestones added yet — manage them from the 🏁 MILESTONES button in your Alfred brief -->",
         "PRODUCT_NAME":          product,
         "ROLLOUT_DATE":          "",
         "CURRENT_QUARTER":       quarter,
@@ -260,6 +261,7 @@ def run_install(raw, emit):
         "feedback_blindspots.md.template":  "feedback_blindspots.md",
         "project_initiatives.md.template":  "project_q2_initiatives.md",
         "project_personal_cos.md.template": "project_personal_cos.md",
+        "milestones.md.template":           "milestones.md",
         "MEMORY.md.template":               "MEMORY.md",
     }
     for tmpl, dst_name in mem_templates.items():
@@ -277,8 +279,13 @@ def run_install(raw, emit):
             emit(f"✓ {fname}", "ok")
 
     # Config file
+    installed_version = "1.0.0"
+    ver_file = ALFRED_REPO / "VERSION"
+    if ver_file.exists():
+        installed_version = ver_file.read_text().strip()
+
     config_out = {
-        "version": "1.0",
+        "version": installed_version,
         "generated": datetime.now().isoformat(),
         "user": {k: config[k] for k in ["USER_NAME","USER_EMAIL","COMPANY","USER_ROLE","SLACK_USER_ID","SLACK_WORKSPACE_ID"]},
         "paths": {"briefs_dir": briefs_dir, "memory_dir": str(memory_dir), "repo_dir": repo_dir},

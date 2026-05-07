@@ -52,6 +52,14 @@ SOURCE_NAMES = {
     "drive": "📁 Drive", "gmail": "📧 Gmail", "granola": "🎙️ Granola",
 }
 SIGNAL_ICONS = {"win": "🟢", "strategy": "🔵", "gap": "🟡"}
+MILESTONE_STATUS_MAP = {
+    "on_track":  ("milestone-on-track",  "ON TRACK"),
+    "at_risk":   ("milestone-at-risk",   "AT RISK"),
+    "stalled":   ("milestone-stalled",   "STALLED"),
+    "complete":  ("milestone-complete",  "COMPLETE"),
+    "cancelled": ("milestone-cancelled", "CANCELLED"),
+    "active":    ("milestone-on-track",  "ACTIVE"),
+}
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -219,6 +227,57 @@ def r_delta(delta):
     return "<ul>" + "\n".join(items) + "</ul>", ""
 
 
+def r_milestones(milestones):
+    if not milestones:
+        return ""
+    html = ""
+    for m in milestones:
+        cls, label = MILESTONE_STATUS_MAP.get(m.get("status", "active"), ("milestone-on-track", "ACTIVE"))
+        target = f' <span class="milestone-date">→ {esc(m["target_date"])}</span>' if m.get("target_date") else ""
+        summary = f'<div class="milestone-summary">{esc(m["summary"])}</div>' if m.get("summary") else ""
+        signals_html = ""
+        for s in m.get("signals", []):
+            icon = SIGNAL_ICONS.get(s.get("type"), "⚪")
+            link = f' <a href="{s["url"]}" target="_blank">View →</a>' if s.get("url") else ""
+            src_badge = f'<span class="signal-src">{esc(s.get("source",""))}</span>' if s.get("source") else ""
+            signals_html += (
+                f'<div class="milestone-signal">'
+                f'<span class="signal-icon-sm">{icon}</span>'
+                f'{src_badge} {esc(s["text"])}{link}'
+                f'</div>\n'
+            )
+        html += (
+            f'<div class="milestone-card">'
+            f'<div class="milestone-hdr">'
+            f'<span class="milestone-name">{esc(m["name"])}</span>'
+            f'<span class="milestone-badge {cls}">{label}</span>'
+            f'{target}'
+            f'</div>'
+            f'{summary}'
+            f'{"<div class=milestone-signals>" + signals_html + "</div>" if signals_html else ""}'
+            f'</div>\n'
+        )
+    return html
+
+
+def _check_update():
+    """Returns (update_available: bool, latest_version: str)."""
+    try:
+        cfg_path = Path.home() / ".alfred-config.json"
+        installed = "0.0.0"
+        if cfg_path.exists():
+            d = json.loads(cfg_path.read_text())
+            installed = d.get("version", "0.0.0")
+        repo_ver_path = Path.home() / "alfred-repo" / "VERSION"
+        if repo_ver_path.exists():
+            latest = repo_ver_path.read_text().strip()
+        else:
+            latest = installed
+        return latest != installed, latest
+    except Exception:
+        return False, ""
+
+
 def r_jira(jira):
     if not jira:
         return ""
@@ -289,6 +348,18 @@ def build():
 
     delta_html, delta_hidden = r_delta(data.get("delta"))
 
+    milestones = data.get("milestones", [])
+    milestones_html = r_milestones(milestones)
+    milestones_hidden = "" if milestones_html else 'style="display:none"'
+    milestones_json = json.dumps(milestones)
+
+    update_avail, latest_ver = _check_update()
+    # Alfred may also pass update info via alfred-data.json (from SKILL.md version check)
+    if data.get("update_available"):
+        update_avail = True
+        latest_ver = data.get("latest_version", latest_ver)
+    update_hidden = "" if update_avail else 'style="display:none"'
+
     slots = {
         "DATE_DISPLAY":        date_display,
         "DATE_SHORT":          date_short,
@@ -317,6 +388,11 @@ def build():
         "DELTA_HTML":          delta_html,
         "DELTA_HIDDEN":        delta_hidden,
         "BAT_LOGO_PATH":       f"file://{BRIEFS_DIR}/batman-logo.png",
+        "MILESTONES_SECTION":  milestones_html,
+        "MILESTONES_HIDDEN":   milestones_hidden,
+        "MILESTONES_JSON":     milestones_json,
+        "UPDATE_HIDDEN":       update_hidden,
+        "LATEST_VERSION":      esc(latest_ver),
     }
 
     for key, val in slots.items():

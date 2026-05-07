@@ -53,12 +53,8 @@ ok "Python $PY_VER found"
 
 # Claude Code
 if ! command -v claude &>/dev/null; then
-  warn "Claude Code CLI not detected in PATH."
-  echo "  If Claude Code is installed, this is fine — continue."
-  echo "  If not, install it from https://claude.ai/code first."
-  echo ""
-  read -r -p "  Continue anyway? (y/n): " cont
-  [[ "$cont" =~ ^[Yy] ]] || exit 0
+  warn "Claude Code CLI not detected — this is fine if you installed the Mac app."
+  warn "If you haven't installed Claude Code yet, get it at https://claude.ai/code first."
 fi
 
 echo ""

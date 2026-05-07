@@ -16,6 +16,7 @@ Read every file in `{{MEMORY_DIR}}/` before anything else. Critical files:
 - `last_brief.md` — yesterday's fires, slipped items, priority threads, team commitment statuses
 - `jira_state.md` — running Jira ticket ledger (Create / In Progress / Done). Read this to know what tickets already exist — never re-suggest creating a ticket that's already in the ledger.
 - `calibrations.md` — permanent "not a fire" rules from {{USER_NAME}}'s feedback. Apply every rule here before escalating anything as a fire.
+- `milestones.md` — active milestones with descriptions and target dates. Read carefully — you will gather signals for each one in Step 2.
 
 These three files have different update rules — see Step 7.
 
@@ -40,6 +41,23 @@ If notepad content is returned:
 - If any unchecked `[ ]` item references a name, project, or topic that appears in today's fires, slipped items, or priority threads, surface the connection.
 - List all unchecked items briefly at the bottom of the Coach's Note as "📓 Notepad (open items): …" — one line, comma-separated.
 - Completed items are informational only — no action needed.
+
+**Pending milestone updates**: Check for a milestone update file saved from the brief UI:
+```bash
+ls ~/Downloads/alfred-pending-milestones.json 2>/dev/null
+```
+If found:
+1. Read the file — it contains a `milestones` array with the user's current intended milestone list.
+2. Rewrite `{{MEMORY_DIR}}/milestones.md` with the new milestone list using this format for each entry:
+   ```
+   ## {name}
+   **Description:** {description}
+   **Target date:** {target_date}
+   **Status:** active
+   ```
+3. Delete the file: `rm ~/Downloads/alfred-pending-milestones.json`
+4. Use the updated milestone list for signal gathering this run.
+If no file found, skip silently.
 
 For each feedback file found:
 1. Read the file.
@@ -81,6 +99,14 @@ Merge into a single `yesterday_recap` object. Keep every entry to one line.
 
 **Drive — @-mentions**: `{{MCP_DRIVE}}search_files` query `fullText contains '{{USER_EMAIL}}' and not (owner = 'me') and modifiedTime > '{7_days_ago_iso_z}'`.
 
+**Milestones — semantic signal gathering**: For each active milestone in `milestones.md`:
+- Read the milestone name and description carefully. Use your own understanding of what this milestone involves — the people, workstreams, decisions, and events that would indicate progress or risk. Do not just search for the milestone name.
+- Search Slack for recent messages semantically related to this milestone's subject matter. Think: who owns this work? What would people say if it were moving or stalling? What adjacent topics would surface in conversation?
+- Query Granola for recent meetings where this milestone's subject was discussed.
+- Check Calendar for upcoming events related to this milestone.
+- Search Gmail for unread threads related to this milestone's domain.
+- Synthesize findings into a milestone object: overall status (on_track / at_risk / stalled / complete), a one-line summary of health, and up to 4 key signals (each with type: win/concern/neutral, source, and text). If no signals found, set status to "no_signal" and omit signals array.
+
 **Gmail — unresponded from priority tier**: `{{MCP_GMAIL}}search_threads` with `is:unread newer_than:5d -category:promotions -category:social`. Filter to priority senders + tech-stack vendors + Jira mentions.
 
 # Step 3 — Synthesize the brief
@@ -104,7 +130,8 @@ Sections in order:
 8. ⚠️ SLIPPED — verify movement first.
 9. 💬 PRIORITY THREADS NEEDING REPLY — see Step 4.
 10. 🤝 TEAM COMMITMENTS — {{DIRECT_REPORT_1}} + {{DIRECT_REPORT_2}}.
-11. 📡 {{PRODUCT_NAME}} SIGNALS — 🟢 Wins / 🟡 Capability gaps / 🔵 Strategy.
+11. 🏁 MILESTONES — one card per active milestone. Omit section if no active milestones.
+12. 📡 {{PRODUCT_NAME}} SIGNALS — 🟢 Wins / 🟡 Capability gaps / 🔵 Strategy.
 12. 📄 DRIVE @-MENTIONS — title, owner, "why it matters."
 13. 📊 ROLLOUT METRICS — Days-to-target countdown.
 14. 🎫 JIRA — see Step 3a below.
@@ -220,9 +247,29 @@ Deliver the brief via a pre-built rendering pipeline — do NOT write HTML direc
     "create": [{"title": "Imperative ticket title", "description": "What, why, acceptance criteria."}],
     "in_progress": [{"title": "Ticket name", "note": "Signal that triggered this"}],
     "done": [{"title": "Ticket name", "note": "Signal confirming completion"}]
-  }
+  },
+  "milestones": [
+    {
+      "name": "Milestone name",
+      "description": "Description from milestones.md",
+      "target_date": "YYYY-MM-DD",
+      "status": "on_track|at_risk|stalled|complete|no_signal",
+      "summary": "One-line health summary — what's moving, what's at risk",
+      "signals": [
+        {"type": "win|concern|neutral", "source": "slack|granola|calendar|gmail", "text": "Signal detail — keep to one sentence", "url": null}
+      ]
+    }
+  ],
+  "update_available": false,
+  "latest_version": ""
 }
 ```
+
+**6a-ii. Version check** — check for Alfred updates before rendering:
+```bash
+curl -sf https://raw.githubusercontent.com/ellippma/Alfred-Public/main/VERSION 2>/dev/null || echo ""
+```
+Compare to the `version` field in `~/.alfred-config.json`. If the remote version is newer (different), set `update_available: true` and `latest_version` to the remote version string in the JSON. Otherwise leave both at defaults.
 
 **6b. Run the renderer** (Bash):
 ```

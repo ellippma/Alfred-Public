@@ -443,6 +443,154 @@
     box-sizing: border-box;
   }
 
+  /* ── Milestone cards ─────────────────────────────────────────────────── */
+  .milestone-card {
+    background: var(--white); border: 3px solid var(--black);
+    box-shadow: 4px 4px 0 var(--black);
+    padding: 14px 16px; margin-bottom: 12px;
+  }
+  .milestone-hdr {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;
+  }
+  .milestone-name {
+    font-family: 'Bangers', cursive; font-size: 18px; letter-spacing: 0.04em;
+  }
+  .milestone-badge {
+    font-family: 'Bangers', cursive; font-size: 11px; letter-spacing: 0.07em;
+    padding: 1px 8px; border: 2px solid var(--black); box-shadow: 2px 2px 0 var(--black);
+  }
+  .milestone-on-track  { background: var(--green);  color: #fff; }
+  .milestone-at-risk   { background: var(--yellow); color: var(--black); }
+  .milestone-stalled   { background: var(--red);    color: #fff; }
+  .milestone-complete  { background: var(--blue);   color: #fff; }
+  .milestone-cancelled { background: #ccc;          color: var(--black); }
+  .milestone-date {
+    font-size: 11px; font-weight: 700; color: #6e6e73; margin-left: auto;
+  }
+  .milestone-summary {
+    font-size: 13px; font-weight: 700; margin-bottom: 8px; line-height: 1.5;
+  }
+  .milestone-signals { display: flex; flex-direction: column; gap: 5px; }
+  .milestone-signal {
+    font-size: 12px; font-weight: 700; display: flex; align-items: baseline; gap: 6px;
+    padding: 5px 8px; background: #f9f9f9; border-left: 3px solid var(--black);
+  }
+  .signal-icon-sm { font-size: 14px; flex-shrink: 0; }
+  .signal-src {
+    font-family: 'Bangers', cursive; font-size: 10px; letter-spacing: 0.05em;
+    background: var(--cream); border: 1.5px solid var(--black);
+    padding: 0 5px; flex-shrink: 0;
+  }
+
+  /* ── Bell icon (update available) ───────────────────────────────────── */
+  .update-bell {
+    position: relative; cursor: pointer; background: none; border: none;
+    font-size: 20px; line-height: 1; padding: 2px 4px;
+    transition: transform 0.15s;
+  }
+  .update-bell:hover { transform: scale(1.15); }
+  .update-dot {
+    position: absolute; top: 0; right: 0;
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--red); border: 2px solid var(--yellow);
+  }
+  .update-panel {
+    position: fixed; top: 56px; right: 16px; z-index: 300;
+    background: var(--white); border: 3px solid var(--black);
+    box-shadow: 5px 5px 0 var(--black);
+    padding: 16px 18px; width: 300px;
+    display: none;
+  }
+  .update-panel.open { display: block; }
+  .update-panel-title {
+    font-family: 'Bangers', cursive; font-size: 17px; letter-spacing: 0.06em;
+    margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .update-close { background: none; border: none; font-size: 18px; cursor: pointer; font-weight: 900; }
+  .update-body { font-size: 12px; font-weight: 700; line-height: 1.6; color: #3d3d3f; margin-bottom: 12px; }
+  .update-cmd {
+    font-family: monospace; font-size: 11px; background: #f5f5f7;
+    border: 2px solid var(--black); padding: 6px 8px; display: block;
+    margin-bottom: 10px; word-break: break-all;
+  }
+  .update-copy-btn {
+    font-family: 'Bangers', cursive; font-size: 13px; letter-spacing: 0.06em;
+    background: var(--yellow); color: var(--black);
+    border: 2px solid var(--black); box-shadow: 2px 2px 0 var(--black);
+    padding: 4px 14px; cursor: pointer; width: 100%;
+  }
+
+  /* ── Milestone management FAB + panel ───────────────────────────────── */
+  .milestone-fab {
+    position: fixed; bottom: 72px; right: 24px; z-index: 200;
+    font-family: 'Bangers', cursive; font-size: 14px; letter-spacing: 0.06em;
+    background: var(--blue); color: #fff;
+    border: 3px solid var(--black); box-shadow: 4px 4px 0 var(--black);
+    padding: 8px 18px; cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .milestone-fab:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--black); }
+  .milestone-panel {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 199;
+    background: var(--white); border-top: 4px solid var(--black);
+    padding: 18px 24px 24px; max-height: 70vh; overflow-y: auto;
+    transform: translateY(100%); transition: transform 0.25s ease;
+  }
+  .milestone-panel.open { transform: translateY(0); }
+  .milestone-panel-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+  }
+  .milestone-panel-title { font-family: 'Bangers', cursive; font-size: 20px; letter-spacing: 0.06em; }
+  .milestone-close { font-size: 22px; cursor: pointer; background: none; border: none; font-weight: 900; }
+  .mp-list { max-width: 640px; }
+  .mp-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    border: 2px solid var(--black); padding: 12px 14px; margin-bottom: 10px;
+    background: var(--cream); box-shadow: 3px 3px 0 var(--black);
+  }
+  .mp-item-body { flex: 1; }
+  .mp-item-name { font-family: 'Bangers', cursive; font-size: 16px; letter-spacing: 0.04em; }
+  .mp-item-desc { font-size: 12px; color: #555; margin-top: 2px; line-height: 1.4; }
+  .mp-item-date { font-size: 11px; font-weight: 700; color: var(--blue); margin-top: 2px; }
+  .mp-rm {
+    background: none; border: none; color: #aeaeb2; cursor: pointer;
+    font-size: 22px; line-height: 1; padding: 0; flex-shrink: 0;
+    transition: color 0.15s;
+  }
+  .mp-rm:hover { color: var(--red); }
+  .mp-add-form {
+    max-width: 640px; border: 2px solid var(--black);
+    padding: 14px 16px; background: #f5f5f7; box-shadow: 3px 3px 0 var(--black);
+    margin-top: 4px;
+  }
+  .mp-add-title {
+    font-family: 'Bangers', cursive; font-size: 15px; letter-spacing: 0.06em; margin-bottom: 10px;
+  }
+  .mp-field { margin-bottom: 10px; }
+  .mp-field label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+  .mp-field input, .mp-field textarea {
+    width: 100%; padding: 8px 10px; border: 2px solid var(--black);
+    font-family: 'Comic Neue', cursive; font-size: 13px; font-weight: 700;
+    background: var(--white); outline: none; resize: vertical;
+  }
+  .mp-field input:focus, .mp-field textarea:focus { background: #fffde0; }
+  .mp-add-btn {
+    font-family: 'Bangers', cursive; font-size: 14px; letter-spacing: 0.06em;
+    background: var(--green); color: #fff;
+    border: 2px solid var(--black); box-shadow: 2px 2px 0 var(--black);
+    padding: 5px 18px; cursor: pointer; margin-right: 8px;
+  }
+  .mp-save-btn {
+    font-family: 'Bangers', cursive; font-size: 15px; letter-spacing: 0.06em;
+    background: var(--red); color: #fff;
+    border: 3px solid var(--black); box-shadow: 3px 3px 0 var(--black);
+    padding: 6px 22px; cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .mp-save-btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--black); }
+  .mp-status { font-size: 12px; font-weight: 700; min-height: 18px; display: inline-block; margin-left: 10px; }
+  .mp-status.ok { color: var(--green); }
+
   /* ── Feedback FAB + panel ────────────────────────────────────────────── */
   .feedback-fab {
     position: fixed; bottom: 24px; right: 24px; z-index: 200;
@@ -513,6 +661,9 @@
     <button class="run-now-btn" id="run-now-btn" onclick="runNow()" title="Copy trigger command — paste into Claude Code (Cmd+N, then Cmd+V)">▶ RUN NOW</button>
     <span class="run-now-tip" id="run-now-tip">Copied! Open Claude Code → Cmd+N → Cmd+V</span>
     <button class="expand-all-btn" onclick="toggleAll()">EXPAND ALL!</button>
+    <button class="update-bell" id="update-bell" onclick="toggleUpdate()" title="Alfred update available" {{UPDATE_HIDDEN}}>
+      🔔<span class="update-dot"></span>
+    </button>
   </div>
 </div>
 <script>
@@ -537,6 +688,19 @@
     setInterval(updateAge, 60000);
   })();
 </script>
+
+<!-- Update panel -->
+<div class="update-panel" id="update-panel">
+  <div class="update-panel-title">
+    🔔 UPDATE AVAILABLE
+    <button class="update-close" onclick="toggleUpdate()">✕</button>
+  </div>
+  <div class="update-body">
+    Alfred <strong>v{{LATEST_VERSION}}</strong> is available. To update, open Claude Code and paste this command:
+  </div>
+  <code class="update-cmd">Run the Alfred update: cd ~/alfred-repo &amp;&amp; git pull &amp;&amp; python3 ~/alfred-repo/setup/alfred-update.py</code>
+  <button class="update-copy-btn" onclick="copyUpdateCmd()">COPY UPDATE COMMAND</button>
+</div>
 
 <div class="container">
 
@@ -603,6 +767,11 @@
     <div class="section-body"><div class="card">{{TEAM_COMMITMENTS}}</div></div>
   </section>
 
+  <section id="s-milestones" {{MILESTONES_HIDDEN}}>
+    <div class="section-title">🏁 MILESTONES! <span class="section-chevron">▾</span></div>
+    <div class="section-body">{{MILESTONES_SECTION}}</div>
+  </section>
+
   <section id="s-elixir">
     <div class="section-title">📡 ELIXIR SIGNALS! <span class="section-chevron">▾</span></div>
     <div class="section-body">{{ELIXIR_SIGNALS}}</div>
@@ -653,6 +822,41 @@
   <div class="np-body" id="np-body-sticky" style="display:none">
     <button class="np-new-note-btn" onclick="npAddSticky()">New Note +</button>
     <div class="np-stickies-grid" id="np-stickies"></div>
+  </div>
+</div>
+
+<!-- Milestone management FAB -->
+<button class="milestone-fab" onclick="toggleMp()">🏁 MILESTONES</button>
+
+<!-- Milestone management panel -->
+<div class="milestone-panel" id="mp-panel">
+  <div class="milestone-panel-header">
+    <span class="milestone-panel-title">🏁 MANAGE MILESTONES</span>
+    <button class="milestone-close" onclick="toggleMp()">✕</button>
+  </div>
+  <p style="font-size:13px;font-weight:700;color:#555;margin-bottom:16px;max-width:640px">
+    Add or remove milestones below. When you save, Alfred picks up the changes on the next brief run.
+  </p>
+  <div class="mp-list" id="mp-list"></div>
+  <div class="mp-add-form" id="mp-add-form">
+    <div class="mp-add-title">+ ADD MILESTONE</div>
+    <div class="mp-field">
+      <label>Name</label>
+      <input type="text" id="mp-new-name" placeholder="e.g. Q3 Product Launch" autocomplete="off">
+    </div>
+    <div class="mp-field">
+      <label>Description <span style="font-weight:400;color:#888">(plain English — Alfred uses this to find relevant signals)</span></label>
+      <textarea id="mp-new-desc" rows="2" placeholder="e.g. Ship the redesigned onboarding flow to all paid customers before the sales kickoff"></textarea>
+    </div>
+    <div class="mp-field">
+      <label>Target date <span style="font-weight:400;color:#888">(optional)</span></label>
+      <input type="date" id="mp-new-date">
+    </div>
+    <button class="mp-add-btn" onclick="mpAddItem()">ADD ↓</button>
+  </div>
+  <div style="margin-top:16px;display:flex;align-items:center">
+    <button class="mp-save-btn" onclick="mpSave()">SAVE TO ALFRED ↓</button>
+    <span class="mp-status" id="mp-status"></span>
   </div>
 </div>
 
@@ -905,11 +1109,94 @@
   npRenderStickies();
 
 
+  // ── Update bell ────────────────────────────────────────────────────────
+  function toggleUpdate() {
+    document.getElementById('update-panel').classList.toggle('open');
+  }
+  function copyUpdateCmd() {
+    const cmd = document.querySelector('.update-cmd').textContent;
+    navigator.clipboard.writeText(cmd).then(() => {
+      const btn = document.querySelector('.update-copy-btn');
+      btn.textContent = 'COPIED!';
+      setTimeout(() => btn.textContent = 'COPY UPDATE COMMAND', 2500);
+    });
+  }
+
+  // ── Milestone management ────────────────────────────────────────────────
+  var mpMilestones = (function() {
+    try { return JSON.parse('{{MILESTONES_JSON}}') || []; } catch(e) { return []; }
+  })();
+
+  function toggleMp() {
+    var p = document.getElementById('mp-panel');
+    var fb = document.getElementById('fb-panel');
+    p.classList.toggle('open');
+    if (p.classList.contains('open')) { fb.classList.remove('open'); mpRender(); }
+  }
+
+  function mpRender() {
+    var list = document.getElementById('mp-list');
+    list.innerHTML = '';
+    if (!mpMilestones.length) {
+      list.innerHTML = '<p style="font-size:13px;color:#888;font-weight:700;margin-bottom:12px">No milestones yet. Add one below.</p>';
+      return;
+    }
+    mpMilestones.forEach(function(m, i) {
+      var div = document.createElement('div');
+      div.className = 'mp-item';
+      div.innerHTML =
+        '<div class="mp-item-body">' +
+          '<div class="mp-item-name">' + mpEsc(m.name || '') + '</div>' +
+          (m.description ? '<div class="mp-item-desc">' + mpEsc(m.description) + '</div>' : '') +
+          (m.target_date ? '<div class="mp-item-date">Target: ' + mpEsc(m.target_date) + '</div>' : '') +
+        '</div>' +
+        '<button class="mp-rm" onclick="mpRemove(' + i + ')" title="Remove">×</button>';
+      list.appendChild(div);
+    });
+  }
+
+  function mpRemove(i) {
+    mpMilestones.splice(i, 1);
+    mpRender();
+  }
+
+  function mpAddItem() {
+    var name = document.getElementById('mp-new-name').value.trim();
+    var desc = document.getElementById('mp-new-desc').value.trim();
+    var date = document.getElementById('mp-new-date').value;
+    if (!name) { document.getElementById('mp-new-name').focus(); return; }
+    mpMilestones.push({ name: name, description: desc, target_date: date, status: 'active' });
+    document.getElementById('mp-new-name').value = '';
+    document.getElementById('mp-new-desc').value = '';
+    document.getElementById('mp-new-date').value = '';
+    mpRender();
+  }
+
+  function mpSave() {
+    var payload = JSON.stringify({ milestones: mpMilestones }, null, 2);
+    var blob = new Blob([payload], { type: 'application/json' });
+    var url  = URL.createObjectURL(blob);
+    var a = Object.assign(document.createElement('a'), { href: url, download: 'alfred-pending-milestones.json' });
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+    var st = document.getElementById('mp-status');
+    st.textContent = '✅ Downloaded — Alfred picks up changes on next brief run.';
+    st.className = 'mp-status ok';
+    setTimeout(function() { st.textContent = ''; st.className = 'mp-status'; }, 6000);
+  }
+
+  function mpEsc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
   // ── Feedback ───────────────────────────────────────────────────────────
   function toggleFb() {
     const p = document.getElementById('fb-panel');
     p.classList.toggle('open');
-    if (p.classList.contains('open')) renderFbHistory();
+    if (p.classList.contains('open')) {
+      document.getElementById('mp-panel').classList.remove('open');
+      renderFbHistory();
+    }
   }
   function renderFbHistory() {
     const hist = JSON.parse(localStorage.getItem('alfred-feedback-history') || '[]');
