@@ -185,7 +185,8 @@ For priority threads with a suggested response:
 # Step 5 — Calendar auto-booking
 
 If "let's meet" signals appear:
-- Check NO-FLY LIST: C-suite, {{TIER1_NAME_1}}, {{NOFLY_2}}, {{NOFLY_3}} → DO NOT auto-book.
+- Re-read `project_personal_cos.md` calendar rules and `stakeholders.md` no-fly list before any action.
+- NO-FLY LIST: {{NOFLY_LIST}} — DO NOT auto-book anyone on this list, ever.
 - LIMITS: never invite a distribution list. Never invite more than 4 individuals.
 - Default to suggesting "solve over Slack instead?"
 - If booking: stack back-to-back via `{{MCP_CALENDAR}}create_event`.
