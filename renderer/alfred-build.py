@@ -157,6 +157,32 @@ def r_team_commitments(people):
         )
     return html
 
+def _product_name():
+    """Read product/initiative name from config, fall back to 'Product'."""
+    try:
+        cfg_path = Path.home() / ".alfred-config.json"
+        if cfg_path.exists():
+            d = json.loads(cfg_path.read_text())
+            name = d.get("template_vars", {}).get("PRODUCT_NAME", "")
+            if name:
+                return name
+    except Exception:
+        pass
+    return "Product"
+
+
+def r_product_signals(signals):
+    html = ""
+    for s in signals:
+        icon = SIGNAL_ICONS.get(s.get("type",""), "⚪")
+        link = f' <a href="{s["url"]}" target="_blank">{esc(s.get("url_text","View →"))}</a>' if s.get("url") else ""
+        html += (
+            f'<div class="signal-card">'
+            f'<div class="signal-icon">{icon}</div>'
+            f'<div><div class="signal-title">{esc(s.get("title",""))}</div>{esc(s.get("body",""))}{link}</div>'
+            f'</div>\n'
+        )
+    return html
 
 def r_drive_mentions(mentions):
     html = ""
@@ -384,6 +410,8 @@ def build():
         "SLIPPED_ITEMS":       r_list_items(data.get("slipped",[])),
         "PRIORITY_THREADS":    r_priority_threads(data.get("priority_threads",[])),
         "TEAM_COMMITMENTS":    r_team_commitments(data.get("team_commitments",[])),
+        "PRODUCT_NAME":        _product_name(),
+        "PRODUCT_SIGNALS":     r_product_signals(data.get("product_signals", data.get("elixir_signals", []))),
         "DRIVE_MENTIONS":      r_drive_mentions(data.get("drive_mentions",[])),
         "ROLLOUT_DAYS":        str(data.get("rollout_days") or "—"),
         "ROLLOUT_DAYS_LABEL":  _rollout_days_label(),
