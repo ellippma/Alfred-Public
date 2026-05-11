@@ -248,7 +248,14 @@ def r_delta(delta):
     for item in delta.get("new_slipped", []):
         items.append(f'<li><span class="delta-tag delta-slip">⚠️ NOW SLIPPED</span> {esc(item)}</li>')
     for item in delta.get("other", []):
-        items.append(f'<li><span class="delta-tag delta-other">📌 NOTE</span> {esc(item)}</li>')
+        if isinstance(item, dict):
+            text = esc(item.get("text", ""))
+            url  = item.get("url", "")
+            link = (f' <a href="{esc(url)}" target="_blank" '
+                    f'style="font-weight:700;color:var(--blue)">↗</a>') if url else ""
+            items.append(f'<li><span class="delta-tag delta-other">📌 NOTE</span> {text}{link}</li>')
+        else:
+            items.append(f'<li><span class="delta-tag delta-other">📌 NOTE</span> {esc(item)}</li>')
     if not items:
         return "", 'style="display:none"'
     return "<ul>" + "\n".join(items) + "</ul>", ""

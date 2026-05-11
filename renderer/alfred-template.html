@@ -702,7 +702,7 @@
 
   /* ── Entity management FAB + panel ──────────────────────────────────── */
   .manage-fab {
-    position: fixed; bottom: 120px; right: 24px; z-index: 200;
+    position: fixed; bottom: 70px; right: 24px; z-index: 200;
     font-family: 'Bangers', cursive; font-size: 14px; letter-spacing: 0.06em;
     background: #3a3a3c; color: #fff;
     border: 3px solid var(--black); box-shadow: 4px 4px 0 var(--black);
@@ -1260,6 +1260,12 @@
     document.getElementById('np-body-sticky').style.display = tab === 'sticky' ? '' : 'none';
     document.getElementById('np-tab-check').classList.toggle('active',  tab === 'check');
     document.getElementById('np-tab-sticky').classList.toggle('active', tab === 'sticky');
+    if (tab === 'sticky') {
+      document.querySelectorAll('.np-sticky-ta').forEach(ta => {
+        ta.style.height = 'auto';
+        ta.style.height = ta.scrollHeight + 'px';
+      });
+    }
   }
 
   // ── Checklist ────────────────────────────────────────────────────────

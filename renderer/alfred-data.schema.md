@@ -45,7 +45,7 @@ See `alfred-data.example.json` for a complete working example with inline notes.
 | `resolved` | array of strings | Items resolved since yesterday |
 | `status_changes` | array of strings | Notable status changes |
 | `new_slipped` | array of strings | Items that slipped since yesterday |
-| `other` | array of strings | Anything else worth noting in the change summary |
+| `other` | array | Anything else worth noting. Each item is a string OR `{"text": "...", "url": "..."}` to render a clickable ↗ link |
 
 ---
 
