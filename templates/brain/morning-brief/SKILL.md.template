@@ -14,9 +14,9 @@ Read every file in `{{MEMORY_DIR}}/` before anything else. Critical files:
 - `stakeholders.md` — leadership chain, top-priority responders, peers, direct reports, calendar invite NO-FLY LIST
 - `feedback_blindspots.md` — coaching rules
 - `last_brief.md` — yesterday's fires, slipped items, priority threads, team commitment statuses
-- `delivered.md` — archive of completed board items. Read to avoid re-suggesting work that's already done.
+- `delivered.md` — append-only archive of completed board items. Read this to avoid re-suggesting work that's already been completed.
 - `calibrations.md` — permanent "not a fire" rules from {{USER_NAME}}'s feedback. Apply every rule here before escalating anything as a fire.
-- `milestones.md` — active milestones with descriptions and target dates. Read carefully — you will gather signals for each one in Step 2.
+- `milestones.md` — **deprecated**. Project nodes in `memory/projects/` supersede this file. Read it only if `memory/projects/` is empty (legacy fallback).
 
 These three files have different update rules — see Step 7.
 
@@ -59,6 +59,21 @@ If found:
 4. Use the updated milestone list for signal gathering this run.
 If no file found, skip silently.
 
+**Pending entity updates**: Check for an entity update file:
+```bash
+ls ~/Downloads/alfred-pending-entities.json 2>/dev/null
+```
+If found:
+1. Read the file — contains `{people: [...], projects: [...], saved_at: "..."}`.
+2. For each **person** in the `people` array:
+   - If `memory/people/{slug}.md` exists: update the frontmatter block only. Parse the `---` delimiters, replace name/role/priority/tone fields, preserve everything after the second `---` (signal log + open commitments).
+   - If it doesn't exist: create it using the Step 7f template.
+3. Compare the incoming slugs against all files in `memory/people/`. Any file whose slug is NOT in the incoming list has been explicitly removed by the user — delete it.
+4. Repeat for **projects**: upsert each `memory/projects/{slug}.md` using the Step 7g template. Delete any `memory/projects/` file whose slug is absent from the incoming list.
+5. If `companies` array is present: upsert each `memory/companies/{slug}.md` using the Step 7i template. Delete any `memory/companies/` file (excluding `_template.md`) whose slug is absent from the incoming list.
+6. Delete: `rm ~/Downloads/alfred-pending-entities.json`
+If no file found, skip silently.
+
 For each feedback file found:
 1. Read the file.
 2. Parse entries (delimited by `---`). Each entry has a `Category:` line and free-text body.
@@ -70,6 +85,31 @@ For each feedback file found:
 4. Delete each file after processing: `rm ~/Downloads/alfred-pending-feedback*.txt`
 5. If no files found, skip silently.
 
+# Step 1c — Load relevant person entity nodes
+
+After loading the files above, identify the ~5 most relevant people for today's brief by scanning `last_brief.md` for fires, priority threads, team commitment names, and calendar events with Director+ attendees. Read their node files from `memory/people/{slug}.md` if they exist.
+
+These files accumulate longitudinal signals across briefs — they answer questions like "what's been happening with a given person over the past month?" that `last_brief.md` can't answer. Use them to:
+- Enrich calendar prep notes with recent history and open commitments
+- Calibrate tone and urgency in draft replies
+- Surface patterns (e.g. "this person has now flagged the same topic 3 times")
+- Pre-populate the "they owe you / you owe them" context for fire handling
+
+**Load at most 6 person files per run** — only the ones relevant to today's signals. This keeps context bounded.
+
+For anyone, check if `{firstname-lastname}.md` exists in `memory/people/`.
+
+**Alias resolution — use this when a signal references a name you're not sure about:**
+```bash
+python3 "{{BRIEFS_DIR}}/resolve-entity.py" "Name"
+python3 "{{BRIEFS_DIR}}/resolve-entity.py" "Nickname"
+```
+Exit 0 = found in memory (use the returned slug). Exit 1 = unknown — proceed to Slack lookup in Step 7f entity extraction.
+
+Also load up to **3 project node files** from `memory/projects/` — pick the ones whose `watch_people` or `watch_keywords` overlap with today's fires, threads, and calendar attendees. Read them now; you will route today's signals to them in Step 7g.
+
+Also load up to **2 company node files** from `memory/companies/` (skip `_template.md`) — pick those whose `key_contacts` slugs or `watch_keywords` overlap with today's fires, threads, and calendar attendees. Read them now; you will update them in Step 7i. Company context enriches calendar prep notes, fire urgency, and draft reply tone.
+
 # Step 2 — Gather data (parallel where possible)
 
 **Yesterday's recap — Granola + Slack**: Pull from two sources and merge:
@@ -77,36 +117,39 @@ For each feedback file found:
 - Slack: `from:me after:{yesterday_date} before:{today_date}` to see what was sent yesterday — surface any commitments made, replies sent, or notable actions. Also search `to:me after:{yesterday_date} before:{today_date}` to catch responses received.
 Merge into a single `yesterday_recap` object. Keep every entry to one line.
 
-**Calendar — today's events**: `{{MCP_CALENDAR}}list_events` for today in {{TIMEZONE}}.
+**Calendar — today's events**: `{{CALENDAR_PREFIX}}list_events` for today in {{TIMEZONE}}.
 
 **Granola — open commitments**: `mcp__granola__query_granola_meetings`: "Open commitments, follow-ups, action items from this week. Group by stakeholder."
 
 **Granola — TEAM commitments**: separate query: "What did {{DIRECT_REPORT_1}} commit to and what's the status? What did {{DIRECT_REPORT_2}} commit to and status?"
 
 
-**Slack — priority threads + commitment movement + team activity**:
+**Slack — product signals + priority threads + commitment movement + team activity**:
+- **Product/initiative signals (last 48h):** Search for your key product or initiative name to catch adoption signals, bugs, and feedback.
 - Priority DMs: `to:me after:{2_days_ago} -from:me` — filter to top-priority + Director+ from `stakeholders.md`.
 - Commitment movement: for each in-flight commitment from `last_brief.md`, run ALL of the following before marking it slipped:
   - `{keyword} after:{2_days_ago}` — general Slack signal
   - `from:me {keyword} after:{2_days_ago}` — own messages (may have actioned it without updating the notepad)
   - `mcp__granola__query_granola_meetings` for the commitment keyword — was it confirmed in a meeting?
-  - `{{MCP_DRIVE}}search_files` for the keyword — was a doc or sheet created?
-  - `{{MCP_SLACK}}slack_search_channels` for related channel creation
+  - `{{DRIVE_PREFIX}}search_files` for the keyword — was a doc or sheet created?
+  - `{{SLACK_PREFIX}}slack_search_channels` for related channel creation
   - **Resolution verdict**: if ANY of the above shows clear completion signal, mark as `done` in team_commitments and add to `delta.resolved`. Do NOT require the notepad to be updated — signals > notepad.
   - Only flag as slipped if ALL searches return no movement signal.
 - Team accountability: search {{DIRECT_REPORT_1}}'s and {{DIRECT_REPORT_2}}'s recent activity.
 
-**Drive — @-mentions**: `{{MCP_DRIVE}}search_files` query `fullText contains '{{USER_EMAIL}}' and not (owner = 'me') and modifiedTime > '{7_days_ago_iso_z}'`.
+**Drive — @-mentions**: `{{DRIVE_PREFIX}}search_files` query `fullText contains '' and not (owner = 'me') and modifiedTime > '{7_days_ago_iso_z}'`.
 
-**Milestones — semantic signal gathering**: For each active milestone in `milestones.md`:
-- Read the milestone name and description carefully. Use your own understanding of what this milestone involves — the people, workstreams, decisions, and events that would indicate progress or risk. Do not just search for the milestone name.
-- Search Slack for recent messages semantically related to this milestone's subject matter. Think: who owns this work? What would people say if it were moving or stalling? What adjacent topics would surface in conversation?
-- Query Granola for recent meetings where this milestone's subject was discussed.
-- Check Calendar for upcoming events related to this milestone.
-- Search Gmail for unread threads related to this milestone's domain.
-- Synthesize findings into a milestone object: overall status (on_track / at_risk / stalled / complete), a one-line summary of health, and up to 4 key signals (each with type: win/concern/neutral, source, and text). If no signals found, set status to "no_signal" and omit signals array.
+**Projects — signal gathering**: For each project file in `memory/projects/` (glob all `.md` files):
+- Read the file's frontmatter: `name`, `status`, `target_date`, `watch_people`, `watch_keywords`, `watch_channels`.
+- Search Slack for recent messages matching any `watch_keywords` or from any `watch_people`. Think about what people would say if this project were moving or stalling — don't just search the project name literally.
+- Search in `watch_channels` specifically for signals about this project.
+- Query Granola for recent meetings where this project's subject was discussed.
+- Check Calendar for upcoming events related to this project.
+- Search Gmail for unread threads related to this project's domain.
+- Synthesize into a milestone object for the brief: overall status (on_track / at_risk / stalled / complete), a one-line summary of health, and up to 4 key signals (each with type: win/concern/neutral, source, text). If no signals found, set status to "no_signal" and omit signals array. Projects with a `target_date` get the full milestone card treatment; projects without render as a simpler status card.
+- Pass `target_date` through to the milestone object so the renderer shows the date badge.
 
-**Gmail — unresponded from priority tier**: `{{MCP_GMAIL}}search_threads` with `is:unread newer_than:5d -category:promotions -category:social`. Filter to priority senders + tech-stack vendors.
+**Gmail — unresponded from priority tier**: `{{GMAIL_PREFIX}}search_threads` with `is:unread newer_than:5d -category:promotions -category:social`. Filter to priority senders + tech-stack vendors + Jira mentions.
 
 # Step 3 — Synthesize the brief
 
@@ -115,7 +158,7 @@ Merge into a single `yesterday_recap` object. Keep every entry to one line.
 - `resolved`: fires from yesterday's brief that are no longer present today
 - `status_changes`: team commitment statuses that flipped (e.g. "{{DIRECT_REPORT_1}}: rollout deck in_progress → done")
 - `new_slipped`: items newly appearing in slipped that weren't slipped yesterday
-- `other`: anything else materially different (new Drive mention from someone important, new milestone signal)
+- `other`: anything else materially different (new Drive mention from someone important, new product signal)
 Omit `delta` entirely (or set to null) if nothing meaningful changed.
 
 Sections in order:
@@ -130,6 +173,7 @@ Sections in order:
 9. 💬 PRIORITY THREADS NEEDING REPLY — see Step 4.
 10. 🤝 TEAM COMMITMENTS — {{DIRECT_REPORT_1}} + {{DIRECT_REPORT_2}}.
 11. 🏁 MILESTONES — one card per active milestone. Omit section if no active milestones.
+12. 📡 PRODUCT SIGNALS — 🟢 Wins / 🟡 Capability gaps / 🔵 Strategy.
 12. 📄 DRIVE @-MENTIONS — title, owner, "why it matters."
 13. 📊 ROLLOUT METRICS — Days-to-target countdown.
 14. 📋 BOARD — see Step 3a below.
@@ -180,16 +224,15 @@ For priority threads with a suggested response:
 - Mark `✏️ Reply drafted in Slack` in the brief.
 - If `draft_already_exists`, skip silently.
 - NEVER `slack_send_message` for replies.
-- For priority unresponded emails, create a Gmail draft via `{{MCP_GMAIL}}create_draft`. Note "✉️ Reply drafted in Gmail" in the brief next to the item. NEVER send emails directly.
+- For priority unresponded emails, create a Gmail draft via `{{GMAIL_PREFIX}}create_draft`. Note "✉️ Reply drafted in Gmail" in the brief next to the item. NEVER send emails directly.
 
 # Step 5 — Calendar auto-booking
 
 If "let's meet" signals appear:
-- Re-read `project_personal_cos.md` calendar rules and `stakeholders.md` no-fly list before any action.
-- NO-FLY LIST: {{NOFLY_LIST}} — DO NOT auto-book anyone on this list, ever.
+- Check NO-FLY LIST: [your executive team — check your stakeholders.md no-fly list] — DO NOT auto-book.
 - LIMITS: never invite a distribution list. Never invite more than 4 individuals.
 - Default to suggesting "solve over Slack instead?"
-- If booking: stack back-to-back via `{{MCP_CALENDAR}}create_event`.
+- If booking: stack back-to-back via `{{CALENDAR_PREFIX}}create_event`.
 
 # Step 6 — Deliver HTML brief
 
@@ -237,6 +280,9 @@ Deliver the brief via a pre-built rendering pipeline — do NOT write HTML direc
     {"person": "{{DIRECT_REPORT_1}}", "items": [
       {"text": "Commitment description", "status": "done|shipped|in_progress|overdue|at_risk|stalled|blocked|no_signal"}
     ]}
+  ],
+  "product_signals": [
+    {"type": "win|gap|strategy", "title": "Signal headline", "body": "Signal detail"}
   ],
   "drive_mentions": [
     {"title": "Doc title", "owner": "owner@email.com", "url": "https://drive.google.com/...", "note": "Why it matters"}
@@ -295,17 +341,24 @@ open "{{BRIEFS_DIR}}/alfred-brief-{YYYY-MM-DD}.html"
 
 Three separate files. Each has its own update rule.
 
-## 7a — `last_brief.md` (rolling daily state — overwrite each run)
+## 7a — `last_brief.md` + dated archive (two writes per run)
 
+**Write 1 — Rolling state (overwrite each run):**
 Save `{{MEMORY_DIR}}/last_brief.md` with:
 - Send timestamp
 - Fires flagged (for tracking resolution tomorrow)
 - Slipped items (for next-day search)
 - Priority threads with draft status
 - Team commitment statuses ({{DIRECT_REPORT_1}} + {{DIRECT_REPORT_2}})
+- Key product signals
 - Upcoming deadlines
 
 End with a single line: `*(Board → see delivered.md | Fire calibrations → see calibrations.md)*`
+
+**Write 2 — Dated archive (create, never overwrite):**
+Write the identical content to `memory/history/brief-YYYY-MM-DD.md` (substituting today's date). This file is **write-once** — if it already exists from a re-run, skip it. Never modify existing history files.
+
+This is the raw source layer: it lets you reconstruct exactly what Alfred saw and flagged on any given day. `last_brief.md` is the fast-access rolling state; `history/` is the searchable archive.
 
 ## 7b — `delivered.md` (append-only archive — never overwrite existing entries)
 
@@ -335,7 +388,7 @@ Only write to this file if explicit calibration feedback was given during this r
 ```
 If no new calibrations this run, do not touch this file.
 
-## 7d — Run log (prepend entry to `{{HOME_DIR}}/alfred-run-log.md`)
+## 7d — Run log (prepend entry to `~/alfred-run-log.md`)
 
 Prepend a new entry at the top of the log (below the header, above the previous entry). Keep it tight — this is a machine-readable audit trail.
 
@@ -362,9 +415,240 @@ Format:
 **Days to rollout:** {n}
 ```
 
-## 7e — Git backup (sync renderer code to repo only)
+## 7f — Update person entity nodes (append-only)
 
-After the run log is written, sync only the renderer files back to the repo. Never commit memory files or installed SKILL.md files — they contain personal data.
+File pattern: `{{MEMORY_DIR}}/people/{slug}.md`
+
+For each person who appeared in today's **fires, priority threads, key decisions, or team commitments**, append a dated signal entry to their node file. **Never rewrite or remove existing entries — append only.**
+
+**What to append under `## Signal log`:**
+```
+### YYYY-MM-DD
+- [fire|decision|commit-given|commit-received|thread|meeting|shipped|no-signal] One-line description
+```
+
+**Update `## Open commitments`** when status changes:
+- New commitment surfaced → add `- [ ] {what} — due: {when or "no date"}` under the correct subsection
+- Commitment confirmed resolved → change `[ ]` to `[x]` and add `✓ resolved YYYY-MM-DD`
+
+**Create the file if it doesn't exist** using this template:
+```markdown
+---
+name: {Full Name}
+role: {Title}
+priority: {always-respond | director-plus | team | partner}
+tone: {one-line communication note}
+company: {slug from memory/companies/ — or blank if internal/unknown}
+aliases: [{First}, {Last}, {any known shorthand}]
+email: {slack email if known}
+---
+
+## Open commitments
+### They owe you
+*(none)*
+
+### You owe them
+*(none)*
+
+## Signal log
+```
+
+**Rules:**
+- Max 6 person nodes updated per run. Priority order: fires > priority threads > team commitments > calendar.
+- Do not touch a person's file if they had no new signal in today's brief.
+- Keep each signal log entry to one line. Dates are YYYY-MM-DD. No editorializing — just facts.
+- **Alias self-learning:** if you encountered a name variant in today's signals that you resolved to a known person via context (not via the alias table — i.e. resolve-entity.py returned exit 1 but you figured it out from surrounding text), append that variant to the `aliases:` array in that person's frontmatter. This makes the alias table self-improving over time. Only add it if you're confident (>90%) in the mapping.
+
+**Entity extraction — run after updating known nodes:**
+
+Collect every person name that appeared in today's fires, priority threads, Granola decisions, and calendar events. For each name:
+
+1. Run alias resolution:
+   ```bash
+   python3 "{{BRIEFS_DIR}}/resolve-entity.py" "{name}"
+   ```
+   - Exit 0: name is known — route the signal to the returned slug. Done.
+   - Exit 1: name is unknown — continue.
+
+2. For unknown names, look up their Slack profile:
+   - Call `slack_search_users("{name}")` and read `Title` and `Email` from the result.
+   - If no Slack profile found: skip (likely external contact — phase 2).
+
+3. Score the title:
+   ```bash
+   python3 "{{BRIEFS_DIR}}/resolve-entity.py" "{name}" --score-title "{slack_title}" --email "{slack_email}"
+   ```
+   - `suggestion.create: false` → skip. Do not create a node for ICs or below-threshold titles.
+   - `suggestion.create: true` → create a stub node using the template below.
+
+4. Create the stub node at `memory/people/{slug}.md`:
+   ```markdown
+   ---
+   name: {Full Name}
+   role: {Slack title}
+   priority: {priority from suggestion}
+   tone:
+   company:
+   aliases: [{First name}, {Last name}]
+   email: {slack_email}
+   bootstrapped: {today's date}
+   ---
+
+   ## Open commitments
+   ### They owe you
+   *(none)*
+
+   ### You owe them
+   *(none)*
+
+   ## Signal log
+
+   ### {today's date}
+   - [bootstrap] Node auto-created from {source: Granola meeting title / Slack channel} signal
+   - [{signal_type}] {the actual signal that triggered creation}
+   ```
+
+5. Then append the triggering signal to the new node's signal log as normal (Step 7f rules apply).
+
+**Entity extraction rules:**
+- Max 3 new nodes created per run. If more than 3 unknowns qualify, prioritize by title seniority.
+- Never create a node for yourself.
+- Never create duplicate nodes — run resolve-entity.py first, always.
+- A Manager-tier person (suggestion.priority = "team") is only worth creating if they appeared in a fire or generated a direct commitment to/from you today. Otherwise skip.
+
+## 7g — Update project entity nodes (append-only signal log, overwrite status header)
+
+File pattern: `{{MEMORY_DIR}}/projects/{slug}.md`
+
+For each project node loaded in Step 1c that had matching signals in today's brief:
+
+**Update the `## Status` block** (overwrite this block entirely — it is not historical):
+```
+## Status
+**Health:** {on_track|at_risk|stalled|complete}
+**Summary:** One-line synthesis of today's most important signals for this project
+**Last signal:** YYYY-MM-DD
+```
+
+**Append to `## Signal log`** (never modify existing entries):
+```
+### YYYY-MM-DD
+- [win|concern|neutral|no-signal] One-line description
+```
+
+**Update frontmatter** if status changed: replace the `status:` line and `last_updated:` line only.
+
+**Rules:**
+- Max 4 project nodes updated per run. Priority: projects with fires or priority threads > projects with team commitment signals > others.
+- If a project's watch_people appeared in today's brief but no project-specific signals exist, append `[no-signal]` only if 14+ days since `last_updated`.
+- Keep signal log entries to one line. No editorializing — just facts.
+- Do not create new project files here — that happens via alfred-pending-entities.json (Step 1b). Only update files that already exist.
+
+**Template for new project files** (created via Step 1b entity processing):
+```markdown
+---
+name: {Full Name}
+status: on_track
+last_updated: YYYY-MM-DD
+target_date:
+watch_people: []
+watch_keywords: []
+watch_channels: []
+---
+
+## Status
+**Health:** on_track
+**Summary:** New project — no signals yet
+**Last signal:** YYYY-MM-DD
+
+## Signal log
+```
+
+## 7h — Weekly memory consolidation (Fridays only)
+
+**Skip this step entirely if today is not Friday.**
+
+Once per week, scan all person and project node files and collapse noise that has accumulated in the signal logs. This keeps memory files readable and context-bounded as they grow.
+
+**Which files to scan:**
+- All `memory/people/*.md`
+- All `memory/projects/*.md`
+
+**Three consolidation rules — apply all three to each file:**
+
+**Rule 1 — No-signal collapse**
+If 3 or more consecutive `[no-signal]` entries appear with adjacent dates, replace the entire run with a single line:
+```
+- [no-signal] Dark {N} weeks — no activity {first_date} through {last_date}
+```
+This is idempotent — a pre-collapsed entry won't re-collapse.
+
+**Rule 2 — Duplicate signal merge**
+If the same core fact appears in 3+ entries within any 7-day window (judge by semantic similarity — same person, same project, same sentiment, same outcome), keep the first entry and append ` (unchanged through {last_date})` to it. Delete the duplicate entries.
+Example: three consecutive `[win] Person completed task X` entries → keep first, append `(unchanged through {date})`, delete the others.
+
+**Rule 3 — Resolved commitment pruning**
+In the `## Open commitments` section of person nodes, any `[x]` completed item whose resolution date is 30+ days ago can be deleted entirely. The signal log is the historical record; stale completed items are noise in the working context.
+
+**Hard safety rules — never violate:**
+- Never touch entries from the last 14 days
+- Never consolidate `[fire]` or `[concern]` entries (each occurrence matters)
+- Never remove an entry that contains a direct quote (text in quotation marks)
+- Never consolidate if it would remove the only occurrence of a fact
+- If a file had no consolidatable content, leave it untouched — do not rewrite it
+
+**After consolidating**, append a summary to the run log entry (Step 7d):
+```
+**Friday consolidation:** Consolidated N entries across M files.
+```
+If nothing was consolidated (all files clean), write: `**Friday consolidation:** Nothing to consolidate — files clean.`
+
+## 7i — Update company entity nodes (append-only signal log, overwrite status header)
+
+File pattern: `{{MEMORY_DIR}}/companies/{slug}.md`
+
+For each company node loaded in Step 1c that had matching signals today (via `watch_keywords`, `watch_channels`, or `key_contacts` person signals):
+
+**Update the `## Status` block** (overwrite this block entirely — it is not historical):
+```
+## Status
+**Health:** {on_track|at_risk|stalled|no_signal}
+**Summary:** One-line synthesis of today's most important signals about this account
+**Last signal:** YYYY-MM-DD
+```
+
+**Append to `## Signal log`** (never modify existing entries):
+```
+### YYYY-MM-DD
+- [win|concern|neutral|no-signal] One-line description — source (Slack channel, Granola meeting, etc.)
+```
+
+**Update frontmatter** if status changed: replace the `status:` and `last_updated:` lines only.
+
+**Rules:**
+- Max 3 company nodes updated per run.
+- Only update if a signal actually matched — do not write no-signal entries unless 14+ days since `last_updated`.
+- Keep signal log entries to one line. No editorializing — just facts.
+- Do not create new company files here — create them manually using `memory/companies/_template.md` as a guide.
+
+## 7e — Git backup (two repos: private memory + public renderer)
+
+### Part 1 — Local memory snapshot (PRIVATE — no remote, never push)
+
+After writing all memory files (Steps 7a–7h), snapshot them in a local git repo. This gives you rollback (`git checkout HEAD~1 -- memory/people/{slug}.md`) without publishing personal data anywhere.
+
+```bash
+MEM_DIR="$HOME/.claude/projects/-Users-$(whoami)/memory"
+git -C "$MEM_DIR" init -q 2>/dev/null || true
+git -C "$MEM_DIR" add people/ projects/ history/ last_brief.md 2>/dev/null || true
+git -C "$MEM_DIR" commit -q -m "Alfred brief {YYYY-MM-DD}" 2>/dev/null || true
+```
+
+`git init` is idempotent — safe to run every time. All three lines use `|| true` so a git failure never blocks the brief. No remote is ever configured here.
+
+### Part 2 — Renderer sync (PUBLIC repo)
+
+After the memory snapshot, sync only the renderer files back to the public repo. Never commit memory files or installed SKILL.md files — they contain personal data.
 
 ```bash
 cp "{{BRIEFS_DIR}}/alfred-build.py" "{{REPO_DIR}}/renderer/"

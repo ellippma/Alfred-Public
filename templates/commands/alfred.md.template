@@ -19,17 +19,26 @@ Read these files:
 ## Step 2 — Pull live data relevant to the question
 Use only the tools needed to answer. Common patterns:
 
-**"What did I promise X?"** → search Granola for recent meetings with X, search Slack `from:me to:X` or in channels with X, read the Alfred Notepad via `python3 "{{BRIEFS_DIR}}/read-notepad.py"`
+**"What happened with X?" / "Show me everything about X" / "What did X say about Y?" / "What did we discuss in [month]?"** → ALWAYS start with memory search:
+```bash
+python3 "{{BRIEFS_DIR}}/memory-search.py" "X"
+# With date filter:
+python3 "{{BRIEFS_DIR}}/memory-search.py" "X April"
+python3 "{{BRIEFS_DIR}}/memory-search.py" "X" --since 2026-04-01 --until 2026-04-30
+```
+Memory search covers people/, projects/, companies/, history/ (every brief ever run), and last_brief.md. Use it first — it's fast and may answer the question without any live queries. Then layer in live Slack/Granola only if more recency is needed.
 
-**"What does X owe me?"** → search Granola for commitments from X, search Slack for X's recent messages about open items
+**"What did I promise X?"** → memory search first (`"X commitment"`), then Granola for recent meetings with X, then Slack `from:me to:X`
 
-**"What's the status of Y?"** → search Slack for Y keyword, search Granola for Y, check Drive for docs about Y
+**"What does X owe me?"** → memory search for X (`open commitments` surface automatically), then Granola if needed
 
-**"Who should I talk to about Z?"** → cross-reference stakeholders.md + Slack search
+**"What's the status of Y?"** → memory search for Y first, then Slack + Granola for live signal
 
-**"What's on my calendar today/this week?"** → `{{MCP_CALENDAR}}list_events`
+**"Who should I talk to about Z?"** → memory search for Z (surfaces people + projects that mention it), cross-reference stakeholders.md
 
-**"What fires are there right now?"** → read last_brief.md fires + search Slack for recent messages from {{TIER1_NAME_1}} or {{TIER1_NAME_2}}
+**"What's on my calendar today/this week?"** → `{{CALENDAR_PREFIX}}list_events`
+
+**"What fires are there right now?"** → read last_brief.md fires + search Slack for recent messages from key stakeholders in your tier 1 list
 
 **"Draft a reply to X"** → find the thread in Slack, draft a reply, save via `slack_send_message_draft`, confirm to user
 
