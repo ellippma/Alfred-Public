@@ -159,7 +159,7 @@ def main():
             ok(fname)
         else:
             warn(f"{fname} not found in repo — skipped")
-    for asset in ["batman-logo.png", "read-notepad.py"]:
+    for asset in ["batman-logo.png", "read-notepad.py", "resolve-entity.py", "memory-search.py"]:
         src = repo_dir / "renderer" / asset
         if src.exists():
             shutil.copy2(src, briefs_dir / asset)
