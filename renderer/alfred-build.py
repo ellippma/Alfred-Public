@@ -26,6 +26,19 @@ def _resolve_briefs_dir():
     # 3. Default — same directory as this script
     return Path(__file__).parent
 
+
+def _resolve_memory_dir():
+    cfg = Path.home() / ".alfred-config.json"
+    if cfg.exists():
+        try:
+            data = json.loads(cfg.read_text())
+            p = data.get("paths", {}).get("memory_dir")
+            if p:
+                return Path(p)
+        except Exception:
+            pass
+    return Path.home() / ".claude" / "projects" / f"-Users-{Path.home().name}" / "memory"
+
 BRIEFS_DIR   = _resolve_briefs_dir()
 TEMPLATE     = BRIEFS_DIR / "alfred-template.html"
 DATA_FILE    = BRIEFS_DIR / "alfred-data.json"
@@ -316,6 +329,86 @@ def _rollout_days_label():
     return "target"
 
 
+def r_entities():
+    """Read person + project + company nodes from memory/ and return JSON for ENTITIES_JSON slot."""
+    memory_dir = _resolve_memory_dir()
+    people, projects, companies = [], [], []
+
+    def parse_fm(text):
+        if not text.startswith("---"):
+            return {}
+        end = text.find("---", 3)
+        if end == -1:
+            return {}
+        result = {}
+        for line in text[3:end].strip().split("\n"):
+            if ":" not in line:
+                continue
+            key, _, val = line.partition(":")
+            key, val = key.strip(), val.strip()
+            if val.startswith("[") and val.endswith("]"):
+                result[key] = [x.strip().strip("\"'") for x in val[1:-1].split(",") if x.strip()]
+            else:
+                result[key] = val.strip("\"'")
+        return result
+
+    for subdir, dest, kind in [
+        (memory_dir / "people",    people,    "person"),
+        (memory_dir / "projects",  projects,  "project"),
+        (memory_dir / "companies", companies, "company"),
+    ]:
+        if not subdir.exists():
+            continue
+        for f in sorted(subdir.glob("*.md")):
+            try:
+                fm = parse_fm(f.read_text())
+                if kind == "person":
+                    dest.append({
+                        "slug": f.stem,
+                        "name": fm.get("name", f.stem),
+                        "role": fm.get("role", ""),
+                        "priority": fm.get("priority", ""),
+                        "tone": fm.get("tone", ""),
+                    })
+                elif kind == "project":
+                    for field in ("watch_people", "watch_keywords", "watch_channels"):
+                        v = fm.get(field, [])
+                        if isinstance(v, str):
+                            fm[field] = [x.strip() for x in v.split(",") if x.strip()]
+                    dest.append({
+                        "slug": f.stem,
+                        "name": fm.get("name", f.stem),
+                        "status": fm.get("status", "on_track"),
+                        "target_date": fm.get("target_date", ""),
+                        "watch_people": fm.get("watch_people", []),
+                        "watch_keywords": fm.get("watch_keywords", []),
+                        "watch_channels": fm.get("watch_channels", []),
+                    })
+                elif kind == "company":
+                    if f.stem == "_template":
+                        continue
+                    for field in ("watch_keywords", "watch_channels", "key_contacts", "open_projects"):
+                        v = fm.get(field, [])
+                        if isinstance(v, str):
+                            fm[field] = [x.strip() for x in v.split(",") if x.strip()]
+                    dest.append({
+                        "slug": f.stem,
+                        "name": fm.get("name", f.stem),
+                        "type": fm.get("type", "customer"),
+                        "tier": fm.get("tier", ""),
+                        "domain": fm.get("domain", ""),
+                        "watch_keywords": fm.get("watch_keywords", []),
+                        "watch_channels": fm.get("watch_channels", []),
+                    })
+            except Exception:
+                pass
+
+    people_lookup = {p["slug"]: p["name"] for p in people}
+    return json.dumps({
+        "people": people, "projects": projects, "companies": companies, "people_lookup": people_lookup
+    }).replace("</", "<\\/")
+
+
 def r_kanban_json(kanban):
     """Serialize kanban data for the template's kb-data script tag."""
     if not kanban:
@@ -424,6 +517,7 @@ def build():
         "MILESTONES_SECTION":  milestones_html,
         "MILESTONES_HIDDEN":   milestones_hidden,
         "MILESTONES_JSON":     milestones_json,
+        "ENTITIES_JSON":       r_entities(),
         "UPDATE_HIDDEN":       update_hidden,
         "LATEST_VERSION":      esc(latest_ver),
         "UPDATE_CMD":          f"cd {repo_dir} && git pull && python3 {repo_dir}/setup/alfred-update.py",
