@@ -422,6 +422,80 @@ def r_kanban_json(kanban):
         kanban = {}
     return json.dumps(kanban).replace("</", "<\\/")
 
+
+def r_candidates():
+    """Read pending-candidates.json from memory dir → (html, hidden_attr, json_str).
+
+    Returns hidden if no candidates file exists or it has no proposals.
+    """
+    memory_dir = _resolve_memory_dir()
+    candidates_file = memory_dir / "pending-candidates.json"
+
+    if not candidates_file.exists():
+        return "", 'style="display:none"', "[]"
+
+    try:
+        raw = json.loads(candidates_file.read_text())
+        proposals = raw.get("proposals", [])
+    except Exception:
+        return "", 'style="display:none"', "[]"
+
+    if not proposals:
+        return "", 'style="display:none"', "[]"
+
+    CONF_CLASS = {"high": "conf-high", "medium": "conf-med", "low": "conf-low"}
+    CONF_LABEL = {"high": "HIGH", "medium": "MED", "low": "LOW"}
+    TYPE_ICONS = {
+        "new_person":  "👤",
+        "new_project": "🗂",
+        "new_company": "🏢",
+        "pattern":     "🧠",
+        "insight":     "💡",
+    }
+
+    count = len(proposals)
+    html = (
+        f'<div class="cand-header">'
+        f'<span>{count} proposal{"s" if count != 1 else ""} from Alfred</span>'
+        f'<button class="cand-approve-all" onclick="approveAll()">Approve All →</button>'
+        f'</div>\n'
+    )
+
+    for p in proposals:
+        pid      = esc(p.get("id", ""))
+        icon     = TYPE_ICONS.get(p.get("type", ""), "📋")
+        title    = esc(p.get("title", ""))
+        subtitle = esc(p.get("subtitle", ""))
+        conf     = p.get("confidence", "medium")
+        conf_cls = CONF_CLASS.get(conf, "conf-med")
+        conf_lbl = CONF_LABEL.get(conf, "MED")
+
+        html += (
+            f'<div class="cand-card" id="cand-{pid}" data-id="{pid}">'
+            f'<div class="cand-left">'
+            f'<span class="cand-icon">{icon}</span>'
+            f'<div class="cand-text">'
+            f'<div class="cand-title">{title}</div>'
+            f'<div class="cand-subtitle">{subtitle}</div>'
+            f'</div></div>'
+            f'<div class="cand-right">'
+            f'<span class="conf-badge {conf_cls}">{conf_lbl}</span>'
+            f'<button class="cand-btn cand-approve" onclick="approveCandidate(\'{pid}\')">Approve ✓</button>'
+            f'<button class="cand-btn cand-dismiss" onclick="dismissCandidate(\'{pid}\')">Dismiss ✕</button>'
+            f'</div></div>\n'
+        )
+
+    html += (
+        '<div class="cand-save-row" id="cand-save-row" style="display:none">'
+        '<button class="cand-save-btn" onclick="saveCandidates()">SEND TO ALFRED ↓</button>'
+        '<span class="cand-status" id="cand-status"></span>'
+        '</div>'
+    )
+
+    json_str = json.dumps(proposals).replace("</", "<\\/")
+    return html, "", json_str
+
+
 # ── main ──────────────────────────────────────────────────────────────────────
 
 def r_summary_bar(fires, rollout_days):
@@ -491,6 +565,8 @@ def build():
         latest_ver = data.get("latest_version", latest_ver)
     update_hidden = "" if update_avail else 'style="display:none"'
 
+    candidates_html, candidates_hidden, candidates_json = r_candidates()
+
     slots = {
         "DATE_DISPLAY":        date_display,
         "DATE_SHORT":          date_short,
@@ -528,6 +604,9 @@ def build():
         "UPDATE_HIDDEN":       update_hidden,
         "LATEST_VERSION":      esc(latest_ver),
         "UPDATE_CMD":          f"cd {repo_dir} && git pull && python3 {repo_dir}/setup/alfred-update.py",
+        "CANDIDATES_HTML":     candidates_html,
+        "CANDIDATES_HIDDEN":   candidates_hidden,
+        "CANDIDATES_JSON":     candidates_json,
     }
 
     for key, val in slots.items():

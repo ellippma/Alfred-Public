@@ -74,6 +74,21 @@ If found:
 6. Delete: `rm ~/Downloads/alfred-pending-entities.json`
 If no file found, skip silently.
 
+**Approved memory candidates**: Check for candidates approved from the brief UI:
+```bash
+ls ~/Downloads/alfred-approved-candidates.json 2>/dev/null
+```
+If found:
+1. Read the file — contains `{approved: [...], saved_at: "..."}`.
+2. For each approved proposal, act based on `type`:
+   - `new_person` → create `memory/people/{data.slug}.md` using the Step 7f stub template, populated with fields from `data`.
+   - `new_project` → create `memory/projects/{data.slug}.md` using the Step 7g template, populated with fields from `data`.
+   - `new_company` → create `memory/companies/{data.slug}.md` using the Step 7i template, populated with fields from `data`.
+   - `pattern` / `insight` → append the insight to `memory/calibrations.md` if it's a signal filter rule, or to the relevant entity's signal log if entity-specific.
+3. After processing all approved items, remove them from `memory/pending-candidates.json` (delete entries whose `id` was approved). If the proposals array becomes empty, delete the file.
+4. Delete: `rm ~/Downloads/alfred-approved-candidates.json`
+If no file found, skip silently.
+
 For each feedback file found:
 1. Read the file.
 2. Parse entries (delimited by `---`). Each entry has a `Category:` line and free-text body.
@@ -508,13 +523,14 @@ Collect every person name that appeared in today's fires, priority threads, Gran
    - [{signal_type}] {the actual signal that triggered creation}
    ```
 
-5. Then append the triggering signal to the new node's signal log as normal (Step 7f rules apply).
+5. **Do not create the file directly.** Instead, add the new person as a `new_person` proposal to `memory/pending-candidates.json` (see Step 7j for the candidates format). The file will be created only after the user approves it in the brief UI.
 
 **Entity extraction rules:**
-- Max 3 new nodes created per run. If more than 3 unknowns qualify, prioritize by title seniority.
+- Max 3 new person proposals per run. If more than 3 unknowns qualify, prioritize by title seniority.
 - Never create a node for yourself.
 - Never create duplicate nodes — run resolve-entity.py first, always.
-- A Manager-tier person (suggestion.priority = "team") is only worth creating if they appeared in a fire or generated a direct commitment to/from you today. Otherwise skip.
+- A Manager-tier person (suggestion.priority = "team") is only worth proposing if they appeared in a fire or generated a direct commitment to/from you today. Otherwise skip.
+- Confidence: `high` if they appeared in a fire or direct commitment; `medium` if 2+ signals; `low` otherwise.
 
 ## 7g — Update project entity nodes (append-only signal log, overwrite status header)
 
@@ -629,7 +645,50 @@ For each company node loaded in Step 1c that had matching signals today (via `wa
 - Max 3 company nodes updated per run.
 - Only update if a signal actually matched — do not write no-signal entries unless 14+ days since `last_updated`.
 - Keep signal log entries to one line. No editorializing — just facts.
-- Do not create new company files here — create them manually using `memory/companies/_template.md` as a guide.
+- Do not create new company files here — propose them via Step 7j instead.
+
+## 7j — Write memory proposals to pending-candidates.json
+
+After completing 7f–7i, consolidate all staged proposals (new person stubs from 7f, auto-detected entities below) into `memory/pending-candidates.json`.
+
+**Auto-detect untracked companies**: Scan today's Gong transcripts, Slack signals, and Granola meeting notes for external organization names that do NOT have a node in `memory/companies/`. Qualify a company for proposal if:
+- Named 2+ times across independent sources today, OR
+- Appeared in a fire or priority thread
+- Is clearly an external org (not an internal team or generic term)
+
+**Auto-detect untracked projects/initiatives**: Scan today's signals for initiative or project names that do NOT match any file in `memory/projects/`. Qualify for proposal if:
+- Named 3+ times across signals today, OR
+- Directly tied to a fire or team commitment
+
+**Write all proposals to `{{MEMORY_DIR}}/pending-candidates.json`**:
+
+```json
+{
+  "generated": "YYYY-MM-DD",
+  "proposals": [
+    {
+      "id": "p-{type}-{slug}",
+      "type": "new_person | new_project | new_company",
+      "title": "Create: {Full Name or Project/Company name}",
+      "subtitle": "{role or context} · {trigger: e.g. appeared in 2 fires, mentioned 3× in Slack}",
+      "confidence": "high | medium | low",
+      "source": "morning-brief",
+      "data": {
+        "slug": "{kebab-case-slug}",
+        "name": "{Full Name}",
+        "...": "entity-specific fields matching the Step 7f / 7g / 7i templates"
+      }
+    }
+  ]
+}
+```
+
+**Merge rules:**
+- If `pending-candidates.json` already exists (unreviewed proposals from a prior run): load and merge. Skip any proposal whose `id` already exists — never duplicate.
+- If the file does not exist: create it fresh.
+- If there are no new proposals and no existing file: do nothing.
+
+**Max 5 total proposals across all types per run.** Prioritize: fires/commitments > 2+ signal count > single mention. Confidence: `high` = fire or direct commitment; `medium` = 2+ signals; `low` = once, inferred.
 
 ## 7e — Git backup (two repos: private memory + public renderer)
 

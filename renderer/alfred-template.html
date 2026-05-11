@@ -318,6 +318,33 @@
   .drive-item .doc-title { margin-bottom: 3px; }
   .drive-item .doc-meta  { font-size: 12px; font-weight: 400; color: #555; }
 
+  /* ── Memory Proposals (Candidates) ───────────────────────────────── */
+  .cand-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-size:13px; font-weight:700; color:#555; text-transform:uppercase; letter-spacing:.05em; }
+  .cand-approve-all { background:var(--black); color:var(--white); border:none; padding:6px 12px; font-size:11px; font-weight:800; letter-spacing:.05em; cursor:pointer; }
+  .cand-approve-all:hover { background:#333; }
+  .cand-card { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-top:2px solid var(--black); gap:12px; transition:opacity .2s; }
+  .cand-card:first-of-type { border-top:none; padding-top:0; }
+  .cand-card.cand-approved { opacity:.5; }
+  .cand-left { display:flex; align-items:center; gap:12px; flex:1; min-width:0; }
+  .cand-icon { font-size:20px; flex-shrink:0; }
+  .cand-text { min-width:0; }
+  .cand-title { font-size:13px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cand-subtitle { font-size:12px; font-weight:400; color:#555; margin-top:2px; }
+  .cand-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .conf-badge { font-size:10px; font-weight:800; letter-spacing:.08em; padding:3px 7px; border:2px solid var(--black); }
+  .conf-high { background:#d4f5d4; }
+  .conf-med  { background:#fff3cd; }
+  .conf-low  { background:#f5f5f5; }
+  .cand-btn { padding:5px 10px; font-size:11px; font-weight:800; letter-spacing:.05em; cursor:pointer; border:2px solid var(--black); background:var(--white); }
+  .cand-btn:hover { background:var(--black); color:var(--white); }
+  .cand-btn:disabled { opacity:.4; cursor:default; }
+  .cand-approve:hover:not(:disabled) { background:#22c55e; border-color:#22c55e; color:var(--white); }
+  .cand-dismiss:hover:not(:disabled) { background:#ef4444; border-color:#ef4444; color:var(--white); }
+  .cand-save-row { display:flex; align-items:center; gap:14px; margin-top:16px; padding-top:14px; border-top:2px solid var(--black); }
+  .cand-save-btn { background:var(--black); color:var(--white); border:none; padding:8px 18px; font-size:12px; font-weight:800; letter-spacing:.05em; cursor:pointer; }
+  .cand-save-btn:hover { background:#333; }
+  .cand-status { font-size:12px; font-weight:700; color:#22c55e; }
+
   /* ── Metrics ─────────────────────────────────────────────────────── */
   .metrics-card {
     background: var(--white); border: 3px solid var(--black);
@@ -965,6 +992,11 @@
     <div class="section-body"><div class="card">{{DRIVE_MENTIONS}}</div></div>
   </section>
 
+  <section id="s-candidates" {{CANDIDATES_HIDDEN}}>
+    <div class="section-title">🧠 MEMORY PROPOSALS <span class="section-chevron">▾</span></div>
+    <div class="section-body"><div class="card">{{CANDIDATES_HTML}}</div></div>
+  </section>
+
   <section id="s-metrics">
     <div class="section-title">📊 ROLLOUT METRICS! <span class="section-chevron">▾</span></div>
     <div class="section-body">
@@ -1036,6 +1068,7 @@
 
 <script id="mp-data" type="application/json">{{MILESTONES_JSON}}</script>
 <script id="ent-data" type="application/json">{{ENTITIES_JSON}}</script>
+<script id="cand-data" type="application/json">{{CANDIDATES_JSON}}</script>
 
 <!-- Manage FAB -->
 <button class="manage-fab" onclick="toggleManage()">⚙ MANAGE</button>
@@ -1925,6 +1958,57 @@
     document.getElementById('fb-ta').value = '';
     setFbStatus('ok','✅ Downloaded — Alfred picks it up on next brief run.');
     renderFbHistory();
+  }
+
+  // ── Memory Proposals (Candidates) ────────────────────────────────────────
+  var approvedCandidates = {};
+  var allCandidates = (function() {
+    try { return JSON.parse(document.getElementById('cand-data').textContent || '[]'); } catch(e) { return []; }
+  })();
+
+  function approveCandidate(id) {
+    var card = document.getElementById('cand-' + id);
+    if (!card) return;
+    var proposal = allCandidates.find(function(c) { return c.id === id; });
+    if (proposal) approvedCandidates[id] = proposal;
+    card.classList.add('cand-approved');
+    var approveBtn = card.querySelector('.cand-approve');
+    var dismissBtn = card.querySelector('.cand-dismiss');
+    if (approveBtn) { approveBtn.disabled = true; approveBtn.textContent = '✓ Approved'; }
+    if (dismissBtn) { dismissBtn.disabled = true; }
+    updateSaveRow();
+  }
+
+  function dismissCandidate(id) {
+    var card = document.getElementById('cand-' + id);
+    if (card) card.style.display = 'none';
+    delete approvedCandidates[id];
+    updateSaveRow();
+  }
+
+  function approveAll() {
+    allCandidates.forEach(function(c) { approveCandidate(c.id); });
+  }
+
+  function updateSaveRow() {
+    var row = document.getElementById('cand-save-row');
+    if (row) row.style.display = Object.keys(approvedCandidates).length > 0 ? 'flex' : 'none';
+  }
+
+  function saveCandidates() {
+    var approved = Object.values(approvedCandidates).filter(Boolean);
+    if (!approved.length) return;
+    var payload = JSON.stringify({ approved: approved, saved_at: new Date().toISOString() }, null, 2);
+    var blob = new Blob([payload], { type: 'application/json' });
+    var url  = URL.createObjectURL(blob);
+    var a = Object.assign(document.createElement('a'), { href: url, download: 'alfred-approved-candidates.json' });
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+    var st = document.getElementById('cand-status');
+    if (st) {
+      st.textContent = '✅ Downloaded — Alfred picks up on next brief run.';
+      setTimeout(function() { st.textContent = ''; }, 6000);
+    }
   }
 
   // ── Kanban Board ──────────────────────────────────────────────────────────
