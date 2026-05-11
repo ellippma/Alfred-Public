@@ -361,7 +361,9 @@ def run_install(raw, emit):
         "TIER1_NAME_1","TIER1_TITLE_1","TIER1_NOTE_1","TIER1_NAME_2","TIER1_TITLE_2","TIER1_NOTE_2",
         "MANAGER_NAME","MANAGER_TITLE","MANAGER_NOTE",
         "NOFLY_1","NOFLY_2","NOFLY_3","NOFLY_LIST","NOFLY_LIST_MD",
-        "DIRECT_REPORT_1","DIRECT_REPORT_2","DIRECT_REPORTS_INLINE","DIRECT_REPORTS_LIST",
+        "DIRECT_REPORT_1","DIRECT_REPORT_1_TITLE","DIRECT_REPORT_1_NOTE",
+        "DIRECT_REPORT_2","DIRECT_REPORT_2_TITLE","DIRECT_REPORT_2_NOTE",
+        "DIRECT_REPORTS_INLINE","DIRECT_REPORTS_LIST",
         "STAKEHOLDERS_LIST","PRODUCT_NAME","CURRENT_QUARTER","TIMEZONE",
         "BRIEFS_DIR","BRIEFS_DIR_ESC","MEMORY_DIR","REPO_DIR","HOME_DIR",
         "MCP_SLACK","MCP_GMAIL","MCP_CALENDAR","MCP_DRIVE","MCP_GRANOLA","MCP_AVAILABLE",
@@ -1268,7 +1270,6 @@ function goBack() {
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 const TIMEZONE_OPTIONS = TIMEZONE_OPTIONS_PLACEHOLDER;
-window._homeDir = HOME_DIR_PLACEHOLDER;
 
 renderStep();
 loadMCPs();
@@ -1281,10 +1282,7 @@ loadMCPs();
 def build_html():
     """Inject server-side values into the HTML template."""
     tz_js = "[" + ",".join(f'["{tz}","{label}"]' for tz, label in TIMEZONES) + "]"
-    home_js = f'"{str(Path.home())}"'
-    html = HTML_PAGE.replace("TIMEZONE_OPTIONS_PLACEHOLDER", tz_js)
-    html = html.replace("HOME_DIR_PLACEHOLDER", home_js)
-    return html
+    return HTML_PAGE.replace("TIMEZONE_OPTIONS_PLACEHOLDER", tz_js)
 
 
 # ─── HTTP server ──────────────────────────────────────────────────────────────

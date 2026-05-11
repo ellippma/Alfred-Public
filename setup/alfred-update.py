@@ -67,7 +67,9 @@ def detect_mcp_prefixes():
                         prefixes[svc] = prefix
         except Exception:
             pass
-    for svc in ["granola", "scheduled-tasks", "ccd_session"]:
+    # scheduled-tasks and ccd_session are Claude Code built-ins — always present.
+    # Granola is detected via alias matching above; don't hardcode it.
+    for svc in ["scheduled-tasks", "ccd_session"]:
         prefixes[svc] = f"mcp__{svc}__"
     return prefixes
 

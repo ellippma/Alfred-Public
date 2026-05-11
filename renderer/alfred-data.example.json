@@ -1,0 +1,263 @@
+{
+  "__doc__": "alfred-data.json — written by Claude during each brief run, read by alfred-build.py to render the HTML brief. All fields are optional unless marked REQUIRED. See alfred-data.schema.md for full field reference.",
+
+  "date": "2026-01-15",
+
+  "delta": {
+    "__doc__": "What changed since yesterday's brief. Each array is a list of plain-text summary strings. All sub-fields are optional.",
+    "new_fires":      ["Alex Chen: login flow broken for new accounts"],
+    "resolved":       ["Data pipeline backfill — completed overnight"],
+    "status_changes": ["Jordan Lee: API rate-limit fix — shipped"],
+    "new_slipped":    ["Q1 roadmap review — missed Jan 14 deadline"],
+    "other":          ["Alfred v1.3.0 update available (current: 1.2.0)"]
+  },
+
+  "yesterday_recap": {
+    "__doc__": "Summary of the previous workday. If all arrays are empty, the Yesterday section is hidden in the brief.",
+    "date_display":       "Mon, Jan 13",
+    "meetings_done":      ["Product sync — roadmap priorities confirmed"],
+    "decisions":          ["Agreed to defer v2 API until Q2"],
+    "commits_given":      ["You: send budget proposal by Friday"],
+    "commits_received":   ["Jordan: rate-limit fix shipped by EOD Wednesday"],
+    "highlights":         ["Team hit 1000 DAU milestone", "Customer NPS survey closes Friday"]
+  },
+
+  "data_sources": {
+    "__doc__": "Status of each data source. Values: 'ok', 'warn', 'error'. Add a *_note key for any source with a warning or error.",
+    "calendar":      "ok",
+    "slack":         "ok",
+    "drive":         "ok",
+    "gmail":         "ok",
+    "gmail_note":    "No priority threads — newsletters only",
+    "granola":       "warn",
+    "granola_note":  "No meetings recorded since Friday"
+  },
+
+  "resolved_fires": [
+    {
+      "__doc__": "Fires that were resolved since the last brief. Shown as green resolved cards above active fires.",
+      "title": "Data pipeline backfill",
+      "note":  "Completed overnight. Verify row counts in dashboard before standup."
+    }
+  ],
+
+  "fires": [
+    {
+      "__doc__": "Active fires — shown as red cards at the top of the brief. REQUIRED: title, body, first_move. Optional: slack_url.",
+      "title":      "Alex Chen: login flow broken for new accounts",
+      "body":       "Alex DM'd at 7:42 AM: new accounts created since Jan 12 can't log in. Affects ~30 users. Auth service deploy on Jan 12 is the likely culprit.",
+      "first_move": "✏️ Draft reply created in Alex's DM. Loop in Jordan on the Jan 12 deploy.",
+      "slack_url":  "https://yourworkspace.slack.com/archives/D0XXXXXXXX/pXXXXXXXXXXX"
+    }
+  ],
+
+  "coach_note": "Two things worth flagging. First: the Q1 roadmap review slipped past its deadline with no recovery plan set. That meeting needs a new date before it falls off the radar — the exec team will ask for the output at the Feb board prep. Second: Jordan shipped the rate-limit fix overnight, which unblocks the enterprise pilot. Lead with that in the customer call at 2 PM — it was their top blocker.",
+
+  "calendar_events": [
+    {
+      "__doc__": "One entry per calendar event. time is a plain string. priority=true bolds the title. conflict=true adds a warning icon. done=true grays out the row (used for past events in re-runs).",
+      "time":     "9:00 AM",
+      "title":    "Engineering standup",
+      "note":     "Jordan presenting rate-limit fix results. Confirm deploy status.",
+      "done":     false,
+      "conflict": false,
+      "priority": false
+    },
+    {
+      "time":     "11:00 AM",
+      "title":    "Customer pilot review — Acme Corp",
+      "note":     "⭐ Rate-limit fix shipped — lead with this. Their main blocker is resolved. Come with updated latency numbers.",
+      "done":     false,
+      "conflict": false,
+      "priority": true
+    },
+    {
+      "time":     "2:00 PM",
+      "title":    "1:1 with Alex Chen",
+      "note":     "Login flow issue is still open — bring status update. Also: Q1 roadmap reschedule.",
+      "done":     false,
+      "conflict": true,
+      "priority": false
+    }
+  ],
+
+  "calendar_notices": [
+    "Q1 roadmap review has no reschedule date yet — needs to be booked before Friday.",
+    "Board prep package is due Jan 22 — 7 days out."
+  ],
+
+  "due_this_week": [
+    {"text": "Budget proposal — due Friday. You committed to Alex on Monday."},
+    {"text": "NPS survey closes Friday — review responses before customer call."},
+    {
+      "__doc__": "Optional: add pill and pill_color to render a colored label. pill_color values: red, yellow, green, blue, gray.",
+      "text":       "Enterprise pilot go/no-go — due Jan 17",
+      "pill":       "DEADLINE",
+      "pill_color": "red"
+    }
+  ],
+
+  "slipped": [
+    {"text": "Q1 roadmap review — missed Jan 14. No reschedule set."},
+    {"text": "API documentation update — Jordan, no signal since Jan 10."}
+  ],
+
+  "priority_threads": [
+    {
+      "__doc__": "Slack threads needing attention. drafted=true shows a 'Draft ready in Slack' indicator. Optional: slack_url.",
+      "title":     "Alex Chen DM — Login flow bug",
+      "body":      "7:42 AM: ~30 new accounts can't log in since Jan 12 deploy. Reply drafted.",
+      "drafted":   true,
+      "slack_url": "https://yourworkspace.slack.com/archives/D0XXXXXXXX/pXXXXXXXXXXX"
+    },
+    {
+      "title":     "Sam Rivera — Budget question",
+      "body":      "Needs approval for $12K vendor contract before end of quarter. No draft — your call.",
+      "drafted":   false,
+      "slack_url": "https://yourworkspace.slack.com/archives/D0YYYYYYYY/pYYYYYYYYYYY"
+    }
+  ],
+
+  "team_commitments": [
+    {
+      "__doc__": "One entry per tracked team member. items is a list of commitments with status badges.",
+      "person": "Jordan Lee",
+      "items": [
+        {
+          "__doc__": "status values: done, shipped, in_progress, overdue, at_risk, stalled, blocked, no_signal. Optional: note.",
+          "text":   "API rate-limit fix — SHIPPED overnight",
+          "status": "shipped"
+        },
+        {
+          "text":   "API documentation update — no signal since Jan 10",
+          "status": "stalled",
+          "note":   "Last seen Jan 10 in #eng-docs"
+        },
+        {
+          "text":   "Load testing report — due Friday",
+          "status": "in_progress"
+        }
+      ]
+    },
+    {
+      "person": "Sam Rivera",
+      "items": [
+        {
+          "text":   "Q1 sales forecast — submitted Jan 12 ✓",
+          "status": "done"
+        },
+        {
+          "text":   "Vendor contract approval — awaiting your sign-off",
+          "status": "blocked"
+        }
+      ]
+    }
+  ],
+
+  "product_signals": [
+    {
+      "__doc__": "Signals about your main product or initiative. Also accepted as 'elixir_signals' for legacy briefs. type values: win (green), gap (yellow), strategy (blue).",
+      "type":  "win",
+      "title": "Rate-limit fix shipped — enterprise pilot unblocked",
+      "body":  "Jordan's fix landed overnight. Acme Corp's #1 blocker is resolved. Ready to demo in 2 PM call."
+    },
+    {
+      "type":  "gap",
+      "title": "Login flow broken for accounts created after Jan 12",
+      "body":  "~30 affected users. Auth service deploy is suspected cause. Jordan investigating.",
+      "url":      "https://yourworkspace.slack.com/archives/D0XXXXXXXX/pXXXXXXXXXXX",
+      "url_text": "Open thread →"
+    },
+    {
+      "type":  "strategy",
+      "title": "Board prep due Jan 22 — 7 days",
+      "body":  "Package needs Q1 roadmap output, NPS results, and pilot status. All three are in flight."
+    }
+  ],
+
+  "drive_mentions": [
+    {
+      "__doc__": "Google Drive documents relevant to today's brief.",
+      "title": "Q1 Roadmap v3 (last edited Jan 12)",
+      "owner": "jordan@yourcompany.com",
+      "url":   "https://docs.google.com/document/d/XXXXXXXXXXXX/edit",
+      "note":  "Review session was supposed to happen Jan 14. Not yet rescheduled."
+    }
+  ],
+
+  "rollout_days": 167,
+
+  "rollout_note": "167 days to the July 1 launch target. Rate-limit fix removes the last performance blocker for enterprise accounts.",
+
+  "kanban": {
+    "__doc__": "Board state for the interactive kanban in the brief UI. board_state.cards is the full card list. new_todo lists cards added this run. acknowledgement is a plain-text summary shown in the delta section.",
+    "board_state": {
+      "cards": [
+        {
+          "__doc__": "col values: todo, in_progress, done. source: 'alfred' (auto-surfaced) or 'manual'. moved_done: ISO date when moved to Done, or null.",
+          "id":           "kb-abc123",
+          "title":        "Reschedule Q1 roadmap review",
+          "description":  "Missed Jan 14 deadline. Book a new date before Friday — exec team needs the output for Feb board prep.",
+          "source_signal":"Surfaced from: calendar + slipped items, Jan 15",
+          "col":          "todo",
+          "source":       "alfred",
+          "added":        "2026-01-15",
+          "moved_done":   null
+        },
+        {
+          "id":           "kb-def456",
+          "title":        "Resolve login flow bug with Jordan",
+          "description":  "~30 new accounts broken since Jan 12 deploy. Jordan investigating. Needs same-day resolution.",
+          "source_signal":"Surfaced from: Alex Chen DM 7:42 AM, Jan 15",
+          "col":          "in_progress",
+          "source":       "alfred",
+          "added":        "2026-01-15",
+          "moved_done":   null
+        }
+      ]
+    },
+    "board_state_ts": 1736899200,
+    "new_todo": [
+      {
+        "id":           "kb-abc123",
+        "title":        "Reschedule Q1 roadmap review",
+        "description":  "Missed Jan 14. Book a new date before Friday.",
+        "source_signal":"Surfaced from: calendar, Jan 15"
+      }
+    ],
+    "acknowledgement": "Archived 1 item to delivered.md. Added 1 new card to To-Do."
+  },
+
+  "milestones": [
+    {
+      "__doc__": "Project milestones tracked across briefs. status values: on_track, at_risk, stalled, complete, cancelled, active. signals is an array of evidence items.",
+      "name":        "Enterprise Pilot Launch",
+      "description": "Signed enterprise customer piloting the v2 API",
+      "target_date": "2026-02-01",
+      "status":      "on_track",
+      "summary":     "Rate-limit fix shipped overnight — Acme's main blocker resolved. Pilot call at 2 PM.",
+      "signals": [
+        {
+          "__doc__": "type values: win, gap, strategy, concern, neutral. source is a plain label (slack, calendar, email, drive). url is optional.",
+          "type":   "win",
+          "source": "slack",
+          "text":   "Rate-limit fix shipped overnight — Acme's #1 blocker resolved",
+          "url":    null
+        },
+        {
+          "type":   "concern",
+          "source": "slack",
+          "text":   "Login flow broken for accounts created since Jan 12 — affects ~30 users",
+          "url":    "https://yourworkspace.slack.com/archives/D0XXXXXXXX/pXXXXXXXXXXX"
+        }
+      ]
+    }
+  ],
+
+  "update_available": false,
+  "latest_version":  "1.2.0",
+
+  "calibrations_checked": [
+    "__doc__: optional — list of calibration IDs (e.g. cal-001) that were evaluated during this brief run. Populated automatically by alfred-build.py if calibration-check.py is present; can also be set explicitly by the brief runner."
+  ]
+}

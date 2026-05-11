@@ -27,10 +27,12 @@ FAKE_INPUTS = [
     "Direct, data-driven",                 # tier1 note 1
     "Sara Park",                           # tier1 name 2
     "CFO",                                 # tier1 title 2
+    "",                                    # tier1 note 2 (optional, skip)
     "Alice Wong",                          # manager name
     "VP RevOps",                           # manager title
     "Send weekly digest every Friday",     # manager note
-    "Sara Park",                           # no-fly 2
+    "Sara Park",                           # no-fly 1
+    "",                                    # no-fly 2 (skip)
     "",                                    # no-fly 3 (skip)
     # Step 3 — Team
     "Marcus Lee",                          # DR1 name
