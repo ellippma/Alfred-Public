@@ -1139,9 +1139,10 @@
       <div class="ent-field"><label>Type</label>
         <select id="ec-new-type">
           <option value="customer">customer</option>
-          <option value="internal-team">internal-team</option>
+          <option value="prospect">prospect</option>
           <option value="partner">partner</option>
           <option value="vendor">vendor</option>
+          <option value="internal-team">internal-team</option>
         </select>
       </div>
       <div class="ent-field"><label>Tier <span style="font-weight:400;color:#888">(optional)</span></label>
@@ -1735,31 +1736,20 @@
       '</select></div>' +
       '<div class="ent-field"><label>Target date <span style="font-weight:400;color:#888">(optional)</span></label>' +
         '<input type="date" id="ej-edit-date-' + idx + '" value="' + entEsc(proj.target_date||'') + '"></div>' +
-      '<div class="ent-field"><label>Watch people</label>' +
-        '<div class="tag-input-wrap" id="ej-edit-people-wrap-' + idx + '"><input class="tag-input-inner" placeholder="Type and press Enter\u2026"></div></div>' +
-      '<div class="ent-field"><label>Watch keywords</label>' +
-        '<div class="tag-input-wrap" id="ej-edit-kw-wrap-' + idx + '"><input class="tag-input-inner" placeholder="Type and press Enter\u2026"></div></div>' +
-      '<div class="ent-field"><label>Watch channels</label>' +
-        '<div class="tag-input-wrap" id="ej-edit-ch-wrap-' + idx + '"><input class="tag-input-inner" placeholder="Type and press Enter\u2026"></div></div>' +
       '<div class="ent-form-btns">' +
         '<button class="ent-save-btn" onclick="entSaveProject(' + idx + ')">SAVE</button>' +
         '<button class="ent-cancel-btn" onclick="entRenderProjects()">Cancel</button>' +
       '</div>';
     div.appendChild(form);
-    tagInit('ej-edit-people-wrap-' + idx, proj.watch_people   || [], entPeopleAcData());
-    tagInit('ej-edit-kw-wrap-'     + idx, proj.watch_keywords || [], null);
-    tagInit('ej-edit-ch-wrap-'     + idx, proj.watch_channels || [], null);
     document.getElementById('ej-edit-name-' + idx).focus();
   }
 
   function entSaveProject(idx) {
     var proj = entProjects[idx]; if (!proj) return;
-    proj.name           = document.getElementById('ej-edit-name-'   + idx).value.trim();
-    proj.status         = document.getElementById('ej-edit-status-' + idx).value;
-    proj.target_date    = document.getElementById('ej-edit-date-'   + idx).value;
-    proj.watch_people   = tagGet('ej-edit-people-wrap-' + idx);
-    proj.watch_keywords = tagGet('ej-edit-kw-wrap-'     + idx);
-    proj.watch_channels = tagGet('ej-edit-ch-wrap-'     + idx);
+    proj.name        = document.getElementById('ej-edit-name-'   + idx).value.trim();
+    proj.status      = document.getElementById('ej-edit-status-' + idx).value;
+    proj.target_date = document.getElementById('ej-edit-date-'   + idx).value;
+    // watch_people / watch_keywords / watch_channels preserved — Alfred manages from signals
     entRenderProjects();
   }
 
@@ -1793,7 +1783,7 @@
   }
 
   // ── Companies ────────────────────────────────────────────────────────────
-  var ENT_COMPANY_TYPE_LABELS = { customer: 'CUSTOMER', 'internal-team': 'INTERNAL', partner: 'PARTNER', vendor: 'VENDOR' };
+  var ENT_COMPANY_TYPE_LABELS = { customer: 'CUSTOMER', prospect: 'PROSPECT', 'internal-team': 'INTERNAL', partner: 'PARTNER', vendor: 'VENDOR' };
 
   function entRenderCompanies() {
     var list = document.getElementById('ent-companies-list');
@@ -1841,38 +1831,29 @@
     form.innerHTML =
       '<div class="ent-field"><label>Name</label><input type="text" id="ec-edit-name-' + idx + '" value="' + entEsc(co.name||'') + '" autocomplete="off"></div>' +
       '<div class="ent-field"><label>Type</label><select id="ec-edit-type-' + idx + '">' +
-        ['customer','internal-team','partner','vendor'].map(function(v){
+        ['customer','prospect','partner','vendor','internal-team'].map(function(v){
           return '<option value="' + v + '"' + (co.type===v?' selected':'') + '>' + v + '</option>';
         }).join('') +
       '</select></div>' +
-      '<div class="ent-field"><label>Tier</label><select id="ec-edit-tier-' + idx + '">' +
+      '<div class="ent-field"><label>Tier <span style="font-weight:400;color:#888">(optional)</span></label><select id="ec-edit-tier-' + idx + '">' +
         ['','strategic','enterprise','mid-market','smb'].map(function(v){
           return '<option value="' + v + '"' + (co.tier===v?' selected':'') + '>' + (v||'—') + '</option>';
         }).join('') +
       '</select></div>' +
-      '<div class="ent-field"><label>Domain</label><input type="text" id="ec-edit-domain-' + idx + '" value="' + entEsc(co.domain||'') + '" autocomplete="off"></div>' +
-      '<div class="ent-field"><label>Watch keywords</label>' +
-        '<div class="tag-input-wrap" id="ec-edit-kw-wrap-' + idx + '"><input class="tag-input-inner" placeholder="Type and press Enter\u2026"></div></div>' +
-      '<div class="ent-field"><label>Watch channels</label>' +
-        '<div class="tag-input-wrap" id="ec-edit-ch-wrap-' + idx + '"><input class="tag-input-inner" placeholder="Type and press Enter\u2026"></div></div>' +
       '<div class="ent-form-btns">' +
         '<button class="ent-save-btn" onclick="entSaveCompany(' + idx + ')">SAVE</button>' +
         '<button class="ent-cancel-btn" onclick="entRenderCompanies()">Cancel</button>' +
       '</div>';
     div.appendChild(form);
-    tagInit('ec-edit-kw-wrap-' + idx, co.watch_keywords || [], null);
-    tagInit('ec-edit-ch-wrap-' + idx, co.watch_channels || [], null);
     document.getElementById('ec-edit-name-' + idx).focus();
   }
 
   function entSaveCompany(idx) {
     var co = entCompanies[idx]; if (!co) return;
-    co.name           = document.getElementById('ec-edit-name-'   + idx).value.trim();
-    co.type           = document.getElementById('ec-edit-type-'   + idx).value;
-    co.tier           = document.getElementById('ec-edit-tier-'   + idx).value;
-    co.domain         = document.getElementById('ec-edit-domain-' + idx).value.trim();
-    co.watch_keywords = tagGet('ec-edit-kw-wrap-' + idx);
-    co.watch_channels = tagGet('ec-edit-ch-wrap-' + idx);
+    co.name = document.getElementById('ec-edit-name-' + idx).value.trim();
+    co.type = document.getElementById('ec-edit-type-' + idx).value;
+    co.tier = document.getElementById('ec-edit-tier-' + idx).value;
+    // domain / watch_keywords / watch_channels preserved — Alfred manages from signals
     entRenderCompanies();
   }
 
