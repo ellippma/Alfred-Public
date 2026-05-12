@@ -52,6 +52,16 @@ With the brief history, cluster output, and entity files loaded, identify:
 
 **F. Calibration candidates** — topics that have consistently been high-noise / low-signal (appeared frequently but never resulted in action). Propose a new calibration rule.
 
+**G. Tone drift** — for any person node with 10+ signal log entries, read the last 5 signals and compare their implied texture against the current `tone` field in the YAML frontmatter. If the recent signals consistently suggest a different register (e.g., tone says "Direct, expects polish" but recent signals show repeated delays and ambiguity), propose a `tone_update`. Only propose if the drift is clear and evidenced — do not propose tone updates based on a single signal or a bad week.
+
+Tone update proposal format:
+```
+title: "Update tone note: {person name}"
+subtitle: "Current: '{existing tone}' → Suggested: '{proposed new tone}' — Evidence: {2-sentence summary of what changed}"
+type: tone_update
+data: { slug, name, current_tone, proposed_tone, evidence }
+```
+
 # Step 6 — Write proposals to pending-candidates.json
 
 Write all proposals to `memory/pending-candidates.json` using the same format as Step 7j in the morning brief:
@@ -63,7 +73,7 @@ Write all proposals to `memory/pending-candidates.json` using the same format as
   "proposals": [
     {
       "id": "dream-{type}-{slug}-{YYYYMMDD}",
-      "type": "new_person | new_project | new_company | pattern | insight | stale",
+      "type": "new_person | new_project | new_company | pattern | insight | stale | tone_update",
       "title": "Short imperative label — what Alfred is proposing",
       "subtitle": "Evidence: {what triggered this — e.g. appeared in 4 of 6 briefs, cluster of 5 signals}",
       "confidence": "high | medium | low",
@@ -79,6 +89,7 @@ Write all proposals to `memory/pending-candidates.json` using the same format as
 - `insight` — a cross-entity connection (e.g. "3 fires this month all trace back to one person or one channel")
 - `stale` — an entity file approaching decay threshold
 - `new_*` — an entity that should be created
+- `tone_update` — a person's tone note is stale relative to 6 weeks of signal evidence; proposes specific replacement text
 
 **Merge rules** (same as Step 7j):
 - If `pending-candidates.json` already exists, load and merge — skip any `id` that already exists.

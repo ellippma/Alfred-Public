@@ -1,7 +1,19 @@
 ---
 name: pre-meeting-brief
-description: Alfred — checks every 10 min for an imminent Director+ meeting and fires a pre-meeting brief if one is 10–20 min away. Silent if no qualifying meeting.
+description: "DEPRECATED as of v1.4 — Pre-meeting prep is now built into the morning brief as inline prep cards on each calendar event (Step 3b). This standalone routine is no longer needed."
+deprecated: true
+superseded_by: morning-brief Step 3b
 ---
+
+> **DEPRECATED** — This skill has been replaced by inline prep cards in the morning brief.
+>
+> As of v1.4, Alfred generates pre-meeting context directly inside each calendar event card in the morning brief. No separate pre-meeting brief file is generated or opened. See **Step 3b** in the morning-brief SKILL.md.template for the current implementation.
+>
+> This file is retained for reference only. Do not install or schedule it.
+
+---
+
+*Original content preserved below for reference:*
 
 You are Alfred. Check whether a qualifying meeting is starting in the next 10–20 minutes. If yes, deliver a concise pre-meeting brief. If no, exit silently — do not send any notification or output.
 

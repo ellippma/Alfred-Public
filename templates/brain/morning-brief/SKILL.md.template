@@ -81,10 +81,12 @@ ls ~/Downloads/alfred-approved-candidates.json 2>/dev/null
 If found:
 1. Read the file — contains `{approved: [...], saved_at: "..."}`.
 2. For each approved proposal, act based on `type`:
-   - `new_person` → create `memory/people/{data.slug}.md` using the Step 7f stub template, populated with fields from `data`.
+   - `new_person` → create `memory/people/{data.slug}.md` using the Step 7f stub template, populated with fields from `data`. If `data.team_member` is `true`, set `priority: team` in the frontmatter.
    - `new_project` → create `memory/projects/{data.slug}.md` using the Step 7g template, populated with fields from `data`.
    - `new_company` → create `memory/companies/{data.slug}.md` using the Step 7i template, populated with fields from `data`.
+   - `tone_update` → open `memory/people/{data.slug}.md`, find the `tone:` line in YAML frontmatter, replace its value with `data.proposed_tone`. Append a signal log line: `- [YYYY-MM-DD] Tone updated by alfred-dream: "{data.proposed_tone}" (was: "{data.current_tone}")`.
    - `pattern` / `insight` → append the insight to `memory/calibrations.md` if it's a signal filter rule, or to the relevant entity's signal log if entity-specific.
+   - `stale` → open the flagged entity file, set its `status:` frontmatter field to `inactive` and append a signal log line: `- [YYYY-MM-DD] Marked inactive by alfred-dream (90-day silence threshold).`
 3. After processing all approved items, remove them from `memory/pending-candidates.json` (delete entries whose `id` was approved). If the proposals array becomes empty, delete the file.
 4. Delete: `rm ~/Downloads/alfred-approved-candidates.json`
 If no file found, skip silently.
@@ -178,20 +180,17 @@ Omit `delta` entirely (or set to null) if nothing meaningful changed.
 
 Sections in order:
 1. Data status header
-2. ⚡ SINCE YESTERDAY — auto-rendered from `delta` field (no extra work needed here)
-3. 📅 YESTERDAY — meetings attended, decisions, commitments given/received, highlights. Keep it tight.
+2. ⚡ SINCE YESTERDAY — auto-rendered from `delta` field
+3. 📅 YESTERDAY — meetings, decisions, commitments given/received, highlights. Keep it tight.
 4. 🔥 FIRES — fire definition only. "Suggested first move" each.
-5. 🧭 COACH'S NOTE (top placement) — apply blind-spot rules.
-6. ⏰ TODAY — real calendar, stacked. Director+ meetings get full prep.
-7. 📋 DUE THIS WEEK
-8. ⚠️ SLIPPED — verify movement first.
-9. 💬 PRIORITY THREADS NEEDING REPLY — see Step 4.
-10. 🤝 TEAM COMMITMENTS — {{DIRECT_REPORT_1}} + {{DIRECT_REPORT_2}}.
-11. 🏁 MILESTONES — one card per active milestone. Omit section if no active milestones.
-12. 📡 PRODUCT SIGNALS — 🟢 Wins / 🟡 Capability gaps / 🔵 Strategy.
-12. 📄 DRIVE @-MENTIONS — title, owner, "why it matters."
-13. 📊 ROLLOUT METRICS — Days-to-target countdown.
-14. 📋 BOARD — see Step 3a below.
+5. 🧭 COACH'S NOTE — apply blind-spot rules.
+6. 💬 PRIORITY THREADS NEEDING REPLY — see Step 4.
+7. 🤝 TEAM COMMITMENTS — {{DIRECT_REPORT_1}} + {{DIRECT_REPORT_2}}.
+8. 🧠 MEMORY PROPOSALS — auto-rendered from pending-candidates.json
+9. 📄 DRIVE @-MENTIONS — title, owner, "why it matters."
+10. 🗂 PROJECTS — one card per active project.
+11. ⏰ TODAY — real calendar. Meetings with identifiable attendees get prep cards — see Step 3b.
+12. 📋 KANBAN BOARD — see Step 3a below.
 
 # Step 3a — Board (Kanban)
 
@@ -231,6 +230,49 @@ Generate a stable ID: `kb-{6-char alphanumeric}`. Only suggest items NOT already
 
 **In Progress tracking:**
 For cards in In Progress (from pending board state), search for signals — if strong completion signal found, note it in the acknowledgement so the user knows to move it to Done.
+
+# Step 3b — Pre-meeting prep cards
+
+For each event in `calendar_events`, determine whether it has identifiable attendees (tracked people in `memory/people/`, or any named person findable in Slack/Granola). Skip personal appointments with no external attendees (e.g. "Dr Appt", "Lunch", "Block").
+
+For each qualifying meeting, build a `prep` object and attach it to the calendar event:
+
+**1. Last meeting** — Query Granola: `mcp__granola__query_granola_meetings` with the attendee names or meeting title. Find the most recent prior meeting. Extract: date, title, 2-sentence summary of key decisions/outcomes/tone.
+
+**2. Open items** — Check memory node for each attendee (if exists): pull open commitments. Split into:
+- `tag: "you"` — things you owe them (from your commits_given in Granola or prior briefs)
+- `tag: "them", who: "Name"` — things they owe you
+
+If no memory node: scan recent brief history (`memory/history/`) for any commitments involving this person's name.
+
+**3. Recent signals** — Slack search for the 2–3 most recent messages from or to the attendee(s). Also check if they've updated a calendar invite recently. Format each signal as: `who: "Name · Source · Date"`, `text: "message or note"`.
+
+**Populate the `prep` field on the calendar event:**
+```json
+{
+  "prep": {
+    "last_meeting": {
+      "date": "Apr 28",
+      "title": "Meeting title — attendees",
+      "summary": "Two-sentence summary of what happened and what mattered."
+    },
+    "open_items": [
+      {"tag": "you", "who": null, "text": "What you promised"},
+      {"tag": "them", "who": "Their Name", "text": "What they owe you"}
+    ],
+    "signals": [
+      {"who": "Name · Slack · May 9", "text": "Exact quote or paraphrase"},
+      {"who": "Name · Calendar · May 10", "text": "What they noted on the invite"}
+    ]
+  }
+}
+```
+
+**Efficiency rules:**
+- Run prep for max 5 meetings per brief (prioritize Director+ attendees and starred meetings)
+- If a meeting has no findable attendee signals after a quick search, set `prep: null` — do not generate empty cards
+- Reuse Granola data already pulled in Step 2 — do not re-query for the same person
+- This step replaces the standalone pre-meeting brief routine entirely
 
 # Step 4 — Reply drafts go to SLACK DRAFTS
 
@@ -283,7 +325,20 @@ Deliver the brief via a pre-built rendering pipeline — do NOT write HTML direc
   ],
   "coach_note": "One paragraph — blind-spot coaching. Omit if nothing relevant.",
   "calendar_events": [
-    {"time": "9:00 AM", "title": "Event name", "note": "Prep note or blank", "done": false, "conflict": false, "priority": false}
+    {
+      "time": "9:00 AM", "title": "Event name", "note": "Prep note or blank",
+      "done": false, "conflict": false, "priority": false,
+      "prep": {
+        "last_meeting": {"date": "Apr 28", "title": "Meeting title", "summary": "Two-sentence summary."},
+        "open_items": [
+          {"tag": "you", "who": null, "text": "What you promised"},
+          {"tag": "them", "who": "Their Name", "text": "What they owe you"}
+        ],
+        "signals": [
+          {"who": "Name · Slack · May 9", "text": "Recent message or calendar note"}
+        ]
+      }
+    }
   ],
   "calendar_notices": ["Any freeform notices (accepts, pending invites, etc.)"],
   "due_this_week": [{"text": "Item due — deadline context"}],
@@ -655,6 +710,13 @@ After completing 7f–7i, consolidate all staged proposals (new person stubs fro
 - Named 2+ times across independent sources today, OR
 - Appeared in a fire or priority thread
 - Is clearly an external org (not an internal team or generic term)
+
+When building the `data` block for a `new_company` proposal, auto-populate as many fields as possible from the signals you've already gathered — do not leave them blank if you have the information:
+- `domain`: infer from email addresses, URLs, or common knowledge (e.g. "DocuSign" → `docusign.com`)
+- `type`: default `prospect` if the company is a potential customer you haven't engaged, `customer` if ARR data exists, `partner` if integration/co-sell, `vendor` if tool/service
+- `watch_keywords`: use the company name and any product/brand variants you've seen today (e.g. `["DocuSign", "docusign", "eSignature"]`)
+- `key_contacts`: list the slugs of any tracked people you've seen associated with this company today
+- `watch_channels`: any Slack channels where this company was discussed today
 
 **Auto-detect untracked projects/initiatives**: Scan today's signals for initiative or project names that do NOT match any file in `memory/projects/`. Qualify for proposal if:
 - Named 3+ times across signals today, OR

@@ -88,6 +88,23 @@ for any source with a warning or error (e.g. `"granola_note": "No sessions recor
 | `done` | boolean | `true` grays out the row (for past events on re-runs) |
 | `conflict` | boolean | `true` adds a ⚠️ conflict indicator |
 | `priority` | boolean | `true` bolds the title |
+| `prep` | object\|null | Inline prep card (see below). `null` = no prep card shown |
+
+**`prep`**
+
+| Field | Type | Description |
+|---|---|---|
+| `last_meeting` | object\|null | Most recent prior meeting with these attendees |
+| `last_meeting.date` | string | Display date, e.g. `"Apr 28"` |
+| `last_meeting.title` | string | Meeting title |
+| `last_meeting.summary` | string | Two-sentence summary of key outcomes |
+| `open_items` | array | Outstanding commitments for this meeting |
+| `open_items[].tag` | string | `"you"` (you owe them) or `"them"` (they owe you) |
+| `open_items[].who` | string\|null | Name if `tag = "them"`, else `null` |
+| `open_items[].text` | string | Commitment description |
+| `signals` | array | Recent Slack/calendar signals from attendees |
+| `signals[].who` | string | `"Name · Source · Date"` label |
+| `signals[].text` | string | Message or note content |
 
 ---
 
