@@ -627,7 +627,7 @@ def build():
         "GENERATED_AT":        datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
         "DELTA_HTML":          delta_html,
         "DELTA_HIDDEN":        delta_hidden,
-        "BAT_LOGO_PATH":       f"file://{BRIEFS_DIR}/batman-logo.png",
+        "BAT_LOGO_PATH":       f"file://{BRIEFS_DIR}/alfred-logo.png",
         "MILESTONES_SECTION":  milestones_html,
         "MILESTONES_HIDDEN":   milestones_hidden,
         "MILESTONES_JSON":     milestones_json,

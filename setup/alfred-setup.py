@@ -403,9 +403,9 @@ def install_files(config):
         else:
             print(f"    ⚠️   {src} not found — skipping")
 
-    # Copy batman logo so alfred-build.py can reference it with a correct absolute path
-    logo_src = ALFRED_REPO / "batman-logo.png"
-    logo_dst = briefs_dir / "batman-logo.png"
+    # Copy Alfred logo so alfred-build.py can reference it with a correct absolute path
+    logo_src = ALFRED_REPO / "alfred-logo.png"
+    logo_dst = briefs_dir / "alfred-logo.png"
     if logo_src.exists():
         shutil.copy2(logo_src, logo_dst)
         print(f"    ✅  {logo_dst}")

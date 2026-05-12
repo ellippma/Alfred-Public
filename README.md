@@ -1,4 +1,6 @@
-# 🦇 Alfred — Personal AI Chief of Staff
+<img src="alfred-logo.png" alt="Alfred" width="200">
+
+# Alfred — Personal AI Chief of Staff
 
 Alfred is a personal AI Chief of Staff that runs inside Claude Code. Every morning at 7:57 AM it reads your calendar, Slack, email, meeting transcripts, and documents — then delivers a single HTML brief in your browser with your fires, your day, your team's status, and suggested next moves. It handles follow-through drafts so you don't have to.
 
@@ -276,7 +278,7 @@ alfred-repo/
 │   └── commands/                 ← /alfred slash command template
 ├── renderer/
 │   ├── alfred-build.py           ← Turns alfred-data.json → styled HTML
-│   ├── alfred-template.html      ← Batman-themed brief UI
+│   ├── alfred-template.html      ← Alfred brief UI
 │   └── read-notepad.py           ← Reads notepad from Chrome localStorage
 └── README.md
 ```

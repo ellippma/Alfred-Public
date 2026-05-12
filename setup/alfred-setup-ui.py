@@ -290,10 +290,10 @@ def run_install(raw, emit):
         if src.exists():
             shutil.copy2(src, bd / fname)
             emit(f"✓ {fname}", "ok")
-    logo_src = ALFRED_REPO / "batman-logo.png"
+    logo_src = ALFRED_REPO / "alfred-logo.png"
     if logo_src.exists():
-        shutil.copy2(logo_src, bd / "batman-logo.png")
-        emit("✓ batman-logo.png", "ok")
+        shutil.copy2(logo_src, bd / "alfred-logo.png")
+        emit("✓ alfred-logo.png", "ok")
 
     # Scheduled tasks
     emit("Installing scheduled tasks…", "info")
