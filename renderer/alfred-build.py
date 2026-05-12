@@ -404,11 +404,13 @@ def r_candidates():
     CONF_CLASS = {"high": "conf-high", "medium": "conf-med", "low": "conf-low"}
     CONF_LABEL = {"high": "HIGH", "medium": "MED", "low": "LOW"}
     TYPE_ICONS = {
-        "new_person":  "👤",
-        "new_project": "🗂",
-        "new_company": "🏢",
-        "pattern":     "🧠",
-        "insight":     "💡",
+        "new_person":   "👤",
+        "new_project":  "🗂",
+        "new_company":  "🏢",
+        "pattern":      "🧠",
+        "insight":      "💡",
+        "stale":        "🗄",
+        "tone_update":  "🎚",
     }
 
     count = len(proposals)
@@ -428,6 +430,12 @@ def r_candidates():
         conf_cls = CONF_CLASS.get(conf, "conf-med")
         conf_lbl = CONF_LABEL.get(conf, "MED")
 
+        team_cb = (
+            f'<label class="cand-team-label">'
+            f'<input type="checkbox" id="cand-team-{pid}" style="width:14px;height:14px;accent-color:#0A0A0A;cursor:pointer">'
+            f' Direct report / team member</label>'
+        ) if p.get("type") == "new_person" else ""
+
         html += (
             f'<div class="cand-card" id="cand-{pid}" data-id="{pid}">'
             f'<div class="cand-left">'
@@ -435,6 +443,7 @@ def r_candidates():
             f'<div class="cand-text">'
             f'<div class="cand-title">{title}</div>'
             f'<div class="cand-subtitle">{subtitle}</div>'
+            f'{team_cb}'
             f'</div></div>'
             f'<div class="cand-right">'
             f'<span class="conf-badge {conf_cls}">{conf_lbl}</span>'

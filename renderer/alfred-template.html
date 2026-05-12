@@ -341,8 +341,9 @@
   .cand-approve:hover:not(:disabled) { background:#22c55e; border-color:#22c55e; color:var(--white); }
   .cand-dismiss:hover:not(:disabled) { background:#ef4444; border-color:#ef4444; color:var(--white); }
   .cand-save-row { display:flex; align-items:center; gap:14px; margin-top:16px; padding-top:14px; border-top:2px solid var(--black); }
-  .cand-save-btn { background:var(--yellow); color:var(--black); border:2px solid var(--black); box-shadow:3px 3px 0 var(--black); padding:8px 18px; font-size:12px; font-weight:800; letter-spacing:.05em; cursor:pointer; }
-  .cand-save-btn:hover { background:#ffe83a; }
+  .cand-save-btn { background:var(--red); color:#fff; border:3px solid var(--black); box-shadow:3px 3px 0 var(--black); padding:8px 18px; font-size:12px; font-weight:800; letter-spacing:.05em; cursor:pointer; transition:transform 0.1s,box-shadow 0.1s; }
+  .cand-save-btn:active { transform:translate(2px,2px); box-shadow:1px 1px 0 var(--black); }
+  .cand-team-label { display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:#555; margin-top:6px; cursor:pointer; }
   .cand-status { font-size:12px; font-weight:700; color:#22c55e; }
 
   /* ── Metrics ─────────────────────────────────────────────────────── */
@@ -1965,7 +1966,12 @@
     var card = document.getElementById('cand-' + id);
     if (!card) return;
     var proposal = allCandidates.find(function(c) { return c.id === id; });
-    if (proposal) approvedCandidates[id] = proposal;
+    if (proposal) {
+      var copy = JSON.parse(JSON.stringify(proposal));
+      var teamCb = document.getElementById('cand-team-' + id);
+      if (teamCb) copy.data = Object.assign({}, copy.data, { team_member: teamCb.checked });
+      approvedCandidates[id] = copy;
+    }
     card.classList.add('cand-approved');
     var approveBtn = card.querySelector('.cand-approve');
     var dismissBtn = card.querySelector('.cand-dismiss');
