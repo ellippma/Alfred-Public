@@ -1145,15 +1145,6 @@
           <option value="internal-team">internal-team</option>
         </select>
       </div>
-      <div class="ent-field"><label>Tier <span style="font-weight:400;color:#888">(optional)</span></label>
-        <select id="ec-new-tier">
-          <option value="">—</option>
-          <option value="strategic">strategic</option>
-          <option value="enterprise">enterprise</option>
-          <option value="mid-market">mid-market</option>
-          <option value="smb">smb</option>
-        </select>
-      </div>
       <div class="ent-field"><label>Domain <span style="font-weight:400;color:#888">(optional — e.g. lakesidebank.com)</span></label>
         <input type="text" id="ec-new-domain" placeholder="e.g. lakesidebank.com" autocomplete="off">
       </div>
@@ -1736,20 +1727,24 @@
       '</select></div>' +
       '<div class="ent-field"><label>Target date <span style="font-weight:400;color:#888">(optional)</span></label>' +
         '<input type="date" id="ej-edit-date-' + idx + '" value="' + entEsc(proj.target_date||'') + '"></div>' +
+      '<div class="ent-field"><label>Watch channels <span style="font-weight:400;color:#888">(Slack channels Alfred monitors)</span></label>' +
+        '<div class="tag-input-wrap" id="ej-edit-ch-wrap-' + idx + '"><input class="tag-input-inner" placeholder="Type and press Enter…"></div></div>' +
       '<div class="ent-form-btns">' +
         '<button class="ent-save-btn" onclick="entSaveProject(' + idx + ')">SAVE</button>' +
         '<button class="ent-cancel-btn" onclick="entRenderProjects()">Cancel</button>' +
       '</div>';
     div.appendChild(form);
+    tagInit('ej-edit-ch-wrap-' + idx, proj.watch_channels || [], null);
     document.getElementById('ej-edit-name-' + idx).focus();
   }
 
   function entSaveProject(idx) {
     var proj = entProjects[idx]; if (!proj) return;
-    proj.name        = document.getElementById('ej-edit-name-'   + idx).value.trim();
-    proj.status      = document.getElementById('ej-edit-status-' + idx).value;
-    proj.target_date = document.getElementById('ej-edit-date-'   + idx).value;
-    // watch_people / watch_keywords / watch_channels preserved — Alfred manages from signals
+    proj.name           = document.getElementById('ej-edit-name-'   + idx).value.trim();
+    proj.status         = document.getElementById('ej-edit-status-' + idx).value;
+    proj.target_date    = document.getElementById('ej-edit-date-'   + idx).value;
+    proj.watch_channels = tagGet('ej-edit-ch-wrap-' + idx);
+    // watch_people / watch_keywords preserved — Alfred manages from signals
     entRenderProjects();
   }
 
@@ -1797,7 +1792,6 @@
         div.className = 'ent-item'; div.id = 'ent-company-' + i;
         var typeLabel = ENT_COMPANY_TYPE_LABELS[co.type] || (co.type||'').toUpperCase();
         var metaParts = [];
-        if (co.tier && co.tier !== '—' && co.tier !== '') metaParts.push('📊 ' + co.tier);
         if (co.domain) metaParts.push('🌐 ' + co.domain);
         if (co.watch_keywords && co.watch_keywords.length) metaParts.push('🔍 ' + co.watch_keywords.join(', '));
         if (co.watch_channels && co.watch_channels.length) metaParts.push('💬 ' + co.watch_channels.join(', '));
@@ -1835,11 +1829,6 @@
           return '<option value="' + v + '"' + (co.type===v?' selected':'') + '>' + v + '</option>';
         }).join('') +
       '</select></div>' +
-      '<div class="ent-field"><label>Tier <span style="font-weight:400;color:#888">(optional)</span></label><select id="ec-edit-tier-' + idx + '">' +
-        ['','strategic','enterprise','mid-market','smb'].map(function(v){
-          return '<option value="' + v + '"' + (co.tier===v?' selected':'') + '>' + (v||'—') + '</option>';
-        }).join('') +
-      '</select></div>' +
       '<div class="ent-form-btns">' +
         '<button class="ent-save-btn" onclick="entSaveCompany(' + idx + ')">SAVE</button>' +
         '<button class="ent-cancel-btn" onclick="entRenderCompanies()">Cancel</button>' +
@@ -1852,8 +1841,7 @@
     var co = entCompanies[idx]; if (!co) return;
     co.name = document.getElementById('ec-edit-name-' + idx).value.trim();
     co.type = document.getElementById('ec-edit-type-' + idx).value;
-    co.tier = document.getElementById('ec-edit-tier-' + idx).value;
-    // domain / watch_keywords / watch_channels preserved — Alfred manages from signals
+    // tier / domain / watch_keywords / watch_channels preserved — Alfred manages from signals
     entRenderCompanies();
   }
 
@@ -1873,7 +1861,6 @@
     entCompanies.push({
       slug: s, name: name,
       type:           document.getElementById('ec-new-type').value,
-      tier:           document.getElementById('ec-new-tier').value,
       domain:         document.getElementById('ec-new-domain').value.trim(),
       watch_keywords: tagGet('ec-new-kw-wrap'),
       watch_channels: tagGet('ec-new-ch-wrap')
@@ -1951,6 +1938,8 @@
       var copy = JSON.parse(JSON.stringify(proposal));
       var teamCb = document.getElementById('cand-team-' + id);
       if (teamCb) copy.data = Object.assign({}, copy.data, { team_member: teamCb.checked });
+      var coTypeSel = document.getElementById('cand-cotype-' + id);
+      if (coTypeSel) copy.data = Object.assign({}, copy.data, { type: coTypeSel.value });
       approvedCandidates[id] = copy;
     }
     card.classList.add('cand-approved');

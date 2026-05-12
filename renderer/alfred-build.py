@@ -436,6 +436,19 @@ def r_candidates():
             f' Direct report / team member</label>'
         ) if p.get("type") == "new_person" else ""
 
+        current_type = esc(p.get("data", {}).get("type", "prospect"))
+        co_type_dd = (
+            f'<div style="display:flex;align-items:center;gap:8px;margin-top:6px">'
+            f'<span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#555;white-space:nowrap">Company type</span>'
+            f'<select id="cand-cotype-{pid}" style="font-family:\'Comic Neue\',cursive;font-size:12px;font-weight:700;border:2px solid #0A0A0A;padding:3px 6px;background:#fff;cursor:pointer">'
+            f'<option value="customer"{" selected" if current_type=="customer" else ""}>customer</option>'
+            f'<option value="prospect"{" selected" if current_type=="prospect" else ""}>prospect</option>'
+            f'<option value="partner"{" selected" if current_type=="partner" else ""}>partner</option>'
+            f'<option value="vendor"{" selected" if current_type=="vendor" else ""}>vendor</option>'
+            f'<option value="internal-team"{" selected" if current_type=="internal-team" else ""}>internal-team</option>'
+            f'</select></div>'
+        ) if p.get("type") == "new_company" else ""
+
         html += (
             f'<div class="cand-card" id="cand-{pid}" data-id="{pid}">'
             f'<div class="cand-left">'
@@ -443,7 +456,7 @@ def r_candidates():
             f'<div class="cand-text">'
             f'<div class="cand-title">{title}</div>'
             f'<div class="cand-subtitle">{subtitle}</div>'
-            f'{team_cb}'
+            f'{team_cb}{co_type_dd}'
             f'</div></div>'
             f'<div class="cand-right">'
             f'<span class="conf-badge {conf_cls}">{conf_lbl}</span>'
