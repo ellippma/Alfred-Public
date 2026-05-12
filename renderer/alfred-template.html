@@ -260,6 +260,51 @@
   .cal-notices { margin-top: 10px; font-size: 12px; font-weight: 700; }
   .cal-notices span { display: block; margin-bottom: 3px; }
 
+  /* ── Prep cards ──────────────────────────────────────────────────── */
+  .prep-toggle {
+    display: inline-flex; align-items: center; gap: 4px; margin-top: 6px;
+    font-family: 'Bangers', cursive; font-size: 11px; letter-spacing: 0.06em;
+    background: #1a1464; color: #fff; border: none; padding: 3px 10px;
+    cursor: pointer; transition: background 0.1s;
+  }
+  .prep-toggle:hover { background: #2d24a0; }
+  .prep-toggle.open { background: var(--black); }
+  .prep-row td { padding: 0 !important; border-top: none !important; }
+  .prep-card {
+    display: none; background: #f5f5ff;
+    border-top: 2px dashed #bbb; border-bottom: 2px solid var(--black);
+  }
+  .prep-card.open { display: block; }
+  .prep-inner {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+  }
+  .prep-col { padding: 14px 16px; border-right: 1px solid #ddd; }
+  .prep-col:last-child { border-right: none; }
+  .prep-col-label {
+    font-family: 'Bangers', cursive; font-size: 11px; letter-spacing: 0.08em;
+    color: #777; margin-bottom: 8px; display: flex; align-items: center; gap: 5px;
+  }
+  .prep-meeting-meta { font-size: 11px; color: #999; margin-bottom: 5px; }
+  .prep-meeting-summary { font-size: 12px; line-height: 1.5; font-weight: 400; }
+  .prep-item {
+    display: flex; gap: 7px; margin-bottom: 7px; font-size: 12px;
+    line-height: 1.4; align-items: flex-start; font-weight: 400;
+  }
+  .prep-item-tag {
+    font-family: 'Bangers', cursive; font-size: 10px; letter-spacing: 0.04em;
+    padding: 1px 6px; white-space: nowrap; flex-shrink: 0; margin-top: 1px;
+  }
+  .tag-you { background: var(--red); color: #fff; }
+  .tag-them { background: #1a1464; color: #fff; }
+  .prep-signal {
+    margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;
+    font-size: 12px;
+  }
+  .prep-signal:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .prep-signal-who { font-size: 11px; color: #999; margin-bottom: 3px; }
+  .prep-signal-text { line-height: 1.4; font-weight: 400; }
+  .prep-empty { font-size: 12px; color: #bbb; font-style: italic; font-weight: 400; }
+
   /* ── Pills ───────────────────────────────────────────────────────── */
   .pill {
     display: inline-block; font-family: 'Bangers', cursive;
@@ -1206,6 +1251,17 @@
       updateExpandBtn();
     });
   });
+
+  function togglePrep(id) {
+    var card = document.getElementById('prep-' + id);
+    var btn  = document.querySelector('.prep-toggle[data-eid="' + id + '"]');
+    if (!card) return;
+    var isOpen = card.classList.toggle('open');
+    if (btn) {
+      btn.textContent = isOpen ? '📋 PREP ▴' : '📋 PREP ▾';
+      btn.classList.toggle('open', isOpen);
+    }
+  }
 
   function toggleAll() {
     const bodies = document.querySelectorAll('section[id] .section-body');

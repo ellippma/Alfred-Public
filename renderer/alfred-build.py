@@ -108,12 +108,65 @@ def r_fires(fires, resolved):
         )
     return html or "<p style='color:#6e6e73;font-size:13px'>No fires. Good morning.</p>"
 
+def r_prep_card(prep, eid):
+    """Render the hidden prep card row for a calendar event."""
+    lm = prep.get("last_meeting") or {}
+    if lm:
+        lm_html = (
+            f'<div class="prep-meeting-meta">{esc(lm.get("date",""))} · {esc(lm.get("title",""))}</div>'
+            f'<div class="prep-meeting-summary">{esc(lm.get("summary",""))}</div>'
+        )
+    else:
+        lm_html = '<div class="prep-empty">No prior meeting on record</div>'
+
+    items = prep.get("open_items") or []
+    if items:
+        items_html = ""
+        for item in items:
+            tag     = item.get("tag", "you")
+            who     = item.get("who") or ("YOU" if tag == "you" else "THEM")
+            tag_cls = "tag-you" if tag == "you" else "tag-them"
+            items_html += (
+                f'<div class="prep-item">'
+                f'<span class="prep-item-tag {tag_cls}">{esc(who.upper())}</span>'
+                f'{esc(item.get("text",""))}'
+                f'</div>'
+            )
+    else:
+        items_html = '<div class="prep-empty">No tracked open items</div>'
+
+    signals = prep.get("signals") or []
+    if signals:
+        sigs_html = "".join(
+            f'<div class="prep-signal">'
+            f'<div class="prep-signal-who">{esc(s.get("who",""))}</div>'
+            f'<div class="prep-signal-text">{esc(s.get("text",""))}</div>'
+            f'</div>'
+            for s in signals[:3]
+        )
+    else:
+        sigs_html = '<div class="prep-empty">No recent signals</div>'
+
+    return (
+        f'<tr class="prep-row"><td colspan="3">'
+        f'<div class="prep-card" id="prep-{eid}">'
+        f'<div class="prep-inner">'
+        f'<div class="prep-col"><div class="prep-col-label"><span>📅</span> LAST MEETING</div>{lm_html}</div>'
+        f'<div class="prep-col"><div class="prep-col-label"><span>📌</span> OPEN ITEMS</div>{items_html}</div>'
+        f'<div class="prep-col"><div class="prep-col-label"><span>💬</span> RECENT SIGNALS</div>{sigs_html}</div>'
+        f'</div></div>'
+        f'</td></tr>\n'
+    )
+
+
 def r_calendar_rows(events):
     html = ""
-    for e in events:
+    for idx, e in enumerate(events):
+        eid      = f"cal{idx}"
         done     = e.get("done", False)
         conflict = e.get("conflict", False)
         priority = e.get("priority", False)
+        prep     = e.get("prep")
         row_cls  = ' class="done-row"' if done else ""
         name_cls = ' class="meeting-name"' if done else ""
         col_cls  = ' class="conflict"' if conflict else ""
@@ -121,13 +174,18 @@ def r_calendar_rows(events):
         title    = f"<strong>{esc(e.get('title',''))}</strong>" if priority else esc(e.get("title",""))
         note_cls = " green" if done else ""
         note_html = f'<div class="note{note_cls}">{esc(e["note"])}</div>' if e.get("note") else ""
+        prep_btn  = (
+            f'<button class="prep-toggle" data-eid="{eid}" onclick="togglePrep(\'{eid}\')">📋 PREP ▾</button>'
+        ) if prep else ""
         html += (
             f"<tr{row_cls}>"
             f"<td class='time'>{time_str}</td>"
             f"<td{col_cls}><span{name_cls}>{title}</span></td>"
-            f"<td>{note_html}</td>"
+            f"<td>{note_html}{prep_btn}</td>"
             f"</tr>\n"
         )
+        if prep:
+            html += r_prep_card(prep, eid)
     return html
 
 def r_calendar_notices(notices):
