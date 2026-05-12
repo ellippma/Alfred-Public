@@ -951,6 +951,31 @@
     <div class="section-body"><div class="coach-card">{{COACH_NOTE}}</div></div>
   </section>
 
+  <section id="s-threads">
+    <div class="section-title">💬 PRIORITY THREADS! <span class="section-chevron">▾</span></div>
+    <div class="section-body"><div class="card">{{PRIORITY_THREADS}}</div></div>
+  </section>
+
+  <section id="s-team">
+    <div class="section-title">🤝 TEAM COMMITMENTS! <span class="section-chevron">▾</span></div>
+    <div class="section-body"><div class="card">{{TEAM_COMMITMENTS}}</div></div>
+  </section>
+
+  <section id="s-candidates" {{CANDIDATES_HIDDEN}}>
+    <div class="section-title">🧠 MEMORY PROPOSALS <span class="section-chevron">▾</span></div>
+    <div class="section-body"><div class="card">{{CANDIDATES_HTML}}</div></div>
+  </section>
+
+  <section id="s-drive">
+    <div class="section-title">📄 DRIVE @-MENTIONS! <span class="section-chevron">▾</span></div>
+    <div class="section-body"><div class="card">{{DRIVE_MENTIONS}}</div></div>
+  </section>
+
+  <section id="s-milestones" {{MILESTONES_HIDDEN}}>
+    <div class="section-title">🗂 PROJECTS! <span class="section-chevron">▾</span></div>
+    <div class="section-body">{{MILESTONES_SECTION}}</div>
+  </section>
+
   <section id="s-today">
     <div class="section-title">⏰ TODAY — {{DATE_SHORT}} <span class="section-chevron">▾</span></div>
     <div class="section-body">
@@ -962,43 +987,8 @@
     </div>
   </section>
 
-  <section id="s-due">
-    <div class="section-title">📋 DUE THIS WEEK! <span class="section-chevron">▾</span></div>
-    <div class="section-body"><div class="card"><ul>{{DUE_THIS_WEEK_ITEMS}}</ul></div></div>
-  </section>
-
-  <section id="s-slipped">
-    <div class="section-title">⚠️ SLIPPED! <span class="section-chevron">▾</span></div>
-    <div class="section-body"><div class="card"><ul>{{SLIPPED_ITEMS}}</ul></div></div>
-  </section>
-
-  <section id="s-threads">
-    <div class="section-title">💬 PRIORITY THREADS! <span class="section-chevron">▾</span></div>
-    <div class="section-body"><div class="card">{{PRIORITY_THREADS}}</div></div>
-  </section>
-
-  <section id="s-team">
-    <div class="section-title">🤝 TEAM COMMITMENTS! <span class="section-chevron">▾</span></div>
-    <div class="section-body"><div class="card">{{TEAM_COMMITMENTS}}</div></div>
-  </section>
-
-  <section id="s-milestones" {{MILESTONES_HIDDEN}}>
-    <div class="section-title">🗂 PROJECTS! <span class="section-chevron">▾</span></div>
-    <div class="section-body">{{MILESTONES_SECTION}}</div>
-  </section>
-
-  <section id="s-drive">
-    <div class="section-title">📄 DRIVE @-MENTIONS! <span class="section-chevron">▾</span></div>
-    <div class="section-body"><div class="card">{{DRIVE_MENTIONS}}</div></div>
-  </section>
-
-  <section id="s-candidates" {{CANDIDATES_HIDDEN}}>
-    <div class="section-title">🧠 MEMORY PROPOSALS <span class="section-chevron">▾</span></div>
-    <div class="section-body"><div class="card">{{CANDIDATES_HTML}}</div></div>
-  </section>
-
   <section id="s-kanban">
-    <div class="section-title">📋 BOARD</div>
+    <div class="section-title">📋 KANBAN BOARD</div>
     <div class="section-body">
       <div id="kb-ack" class="kb-ack" style="display:none"></div>
       <div class="kanban-board">
@@ -1983,16 +1973,25 @@
   }
 
   // ── Kanban Board ──────────────────────────────────────────────────────────
-  const KB_KEY    = 'alfred-kanban-v1';
-  const KB_TS_KEY = 'alfred-kanban-ts';
+  const KB_KEY      = 'alfred-kanban-v1';
+  const KB_TS_KEY   = 'alfred-kanban-ts';
+  const KB_AUTO_KEY = 'alfred-kanban-auto-dismissed';
   let kbCards  = [];
   let kbDragId = null;
 
   function kbGenId() { return 'kb-' + Math.random().toString(36).slice(2, 9); }
   function kbToday() { return new Date().toISOString().split('T')[0]; }
   function kbEsc(s)  { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function kbHash(s) { var h=5381; for(var i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))&0x7fffffff; return h.toString(36); }
 
   function kbPersist() { localStorage.setItem(KB_KEY, JSON.stringify(kbCards)); }
+  function kbAutoDismiss(id) {
+    var d = {}; try { d = JSON.parse(localStorage.getItem(KB_AUTO_KEY)||'{}'); } catch(e) {}
+    d[id] = true; localStorage.setItem(KB_AUTO_KEY, JSON.stringify(d));
+  }
+  function kbIsAutoDismissed(id) {
+    try { return !!JSON.parse(localStorage.getItem(KB_AUTO_KEY)||'{}')[id]; } catch(e) { return false; }
+  }
 
   function kbInit() {
     // Parse Alfred's data blob
@@ -2002,6 +2001,7 @@
     const boardState  = alfredData.board_state  || null;
     const boardTs     = alfredData.board_state_ts || 0;
     const newTodo     = alfredData.new_todo     || [];
+    const autoSeed    = alfredData.auto_seed    || { due: [], slipped: [] };
     const ack         = alfredData.acknowledgement || '';
 
     // Decide authoritative source: Alfred's processed state wins if newer
@@ -2023,6 +2023,22 @@
         existingIds.add(card.id);
       }
     });
+
+    // Auto-seed due-this-week and slipped items (stable IDs, skip if dismissed or already present)
+    var autoToAdd = [];
+    (autoSeed.due || []).forEach(function(text) {
+      var id = 'auto-due-' + kbHash(text);
+      if (!existingIds.has(id) && !kbIsAutoDismissed(id))
+        autoToAdd.push({ id: id, title: '📋 ' + text, description: '', col: 'todo', source: 'auto-due', added: kbToday() });
+    });
+    (autoSeed.slipped || []).forEach(function(text) {
+      var id = 'auto-slip-' + kbHash(text);
+      if (!existingIds.has(id) && !kbIsAutoDismissed(id))
+        autoToAdd.push({ id: id, title: '⚠️ ' + text, description: '', col: 'todo', source: 'auto-slip', added: kbToday() });
+    });
+    // Prepend so they appear at top of To-Do
+    autoToAdd.reverse().forEach(function(c) { kbCards.unshift(c); existingIds.add(c.id); });
+
     kbPersist();
 
     // Show acknowledgement
@@ -2087,7 +2103,10 @@
     var card = kbCards.find(function(c){ return c.id === kbDragId; });
     if (card) {
       card.col = col;
-      if (col === 'done' && !card.moved_done) card.moved_done = kbToday();
+      if (col === 'done') {
+        if (!card.moved_done) card.moved_done = kbToday();
+        if (card.id.startsWith('auto-')) kbAutoDismiss(card.id);
+      }
     }
     kbPersist();
     kbRender();
@@ -2129,6 +2148,7 @@
 
   function kbDelete(id) {
     if (!confirm('Delete this card?')) return;
+    if (id.startsWith('auto-')) kbAutoDismiss(id);
     kbCards = kbCards.filter(function(c){ return c.id !== id; });
     kbPersist(); kbRender();
   }
