@@ -341,8 +341,8 @@
   .cand-approve:hover:not(:disabled) { background:#22c55e; border-color:#22c55e; color:var(--white); }
   .cand-dismiss:hover:not(:disabled) { background:#ef4444; border-color:#ef4444; color:var(--white); }
   .cand-save-row { display:flex; align-items:center; gap:14px; margin-top:16px; padding-top:14px; border-top:2px solid var(--black); }
-  .cand-save-btn { background:var(--black); color:var(--white); border:none; padding:8px 18px; font-size:12px; font-weight:800; letter-spacing:.05em; cursor:pointer; }
-  .cand-save-btn:hover { background:#333; }
+  .cand-save-btn { background:var(--yellow); color:var(--black); border:2px solid var(--black); box-shadow:3px 3px 0 var(--black); padding:8px 18px; font-size:12px; font-weight:800; letter-spacing:.05em; cursor:pointer; }
+  .cand-save-btn:hover { background:#ffe83a; }
   .cand-status { font-size:12px; font-weight:700; color:#22c55e; }
 
   /* ── Metrics ─────────────────────────────────────────────────────── */
@@ -690,13 +690,15 @@
   .feedback-panel {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 199;
     background: var(--white); border-top: 4px solid var(--black);
-    padding: 18px 24px 24px; max-height: 60vh; overflow-y: auto;
+    max-height: 60vh; display: flex; flex-direction: column; overflow: hidden;
     transform: translateY(100%); transition: transform 0.25s ease;
   }
   .feedback-panel.open { transform: translateY(0); }
   .feedback-panel-header {
-    display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 24px 0; flex-shrink: 0; margin-bottom: 14px;
   }
+  .feedback-panel-body { overflow-y: auto; flex: 1; padding: 0 24px 20px; }
   .feedback-panel-title { font-family: 'Bangers', cursive; font-size: 20px; letter-spacing: 0.06em; }
   .feedback-close { font-size: 22px; cursor: pointer; background: none; border: none; font-weight: 900; color: var(--black); }
   .feedback-form { display: flex; flex-direction: column; gap: 10px; max-width: 640px; }
@@ -740,13 +742,15 @@
   .manage-panel {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 199;
     background: var(--white); border-top: 4px solid var(--black);
-    padding: 18px 24px 28px; max-height: 78vh; overflow-y: auto;
+    max-height: 78vh; display: flex; flex-direction: column; overflow: hidden;
     transform: translateY(100%); transition: transform 0.25s ease;
   }
   .manage-panel.open { transform: translateY(0); }
   .manage-panel-header {
-    display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 24px 0; flex-shrink: 0; margin-bottom: 12px;
   }
+  .manage-panel-body { overflow-y: auto; flex: 1; padding: 0 24px 12px; }
   .manage-panel-title { font-family: 'Bangers', cursive; font-size: 20px; letter-spacing: 0.06em; }
   .manage-close { font-size: 22px; cursor: pointer; background: none; border: none; font-weight: 900; color: var(--black); }
   .mgmt-tabs { display: flex; margin-bottom: 16px; max-width: 680px; }
@@ -840,7 +844,7 @@
     font-family: 'Comic Neue', cursive; cursor: pointer;
   }
   .tag-ac-item:hover { background: var(--black); color: #fff; }
-  .mgmt-save-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; border-top: 2px solid #eee; padding-top: 14px; }
+  .mgmt-save-row { display: flex; align-items: center; gap: 12px; flex-shrink: 0; margin-top: 0; border-top: 2px solid #eee; padding: 14px 24px 20px; }
   .mgmt-save-btn {
     font-family: 'Bangers', cursive; font-size: 15px; letter-spacing: 0.06em;
     background: var(--red); color: #fff;
@@ -982,11 +986,6 @@
     <div class="section-body">{{MILESTONES_SECTION}}</div>
   </section>
 
-  <section id="s-product-signals">
-    <div class="section-title">📡 {{PRODUCT_NAME}} SIGNALS! <span class="section-chevron">▾</span></div>
-    <div class="section-body">{{PRODUCT_SIGNALS}}</div>
-  </section>
-
   <section id="s-drive">
     <div class="section-title">📄 DRIVE @-MENTIONS! <span class="section-chevron">▾</span></div>
     <div class="section-body"><div class="card">{{DRIVE_MENTIONS}}</div></div>
@@ -995,21 +994,6 @@
   <section id="s-candidates" {{CANDIDATES_HIDDEN}}>
     <div class="section-title">🧠 MEMORY PROPOSALS <span class="section-chevron">▾</span></div>
     <div class="section-body"><div class="card">{{CANDIDATES_HTML}}</div></div>
-  </section>
-
-  <section id="s-metrics">
-    <div class="section-title">📊 ROLLOUT METRICS! <span class="section-chevron">▾</span></div>
-    <div class="section-body">
-      <div class="metrics-card">
-        <div class="metric">
-          <div class="metric-number">{{ROLLOUT_DAYS}}</div>
-          <div class="label">Days to {{ROLLOUT_DAYS_LABEL}}!</div>
-        </div>
-        <div class="metric-body">
-          {{ROLLOUT_NOTE}}
-        </div>
-      </div>
-    </div>
   </section>
 
   <section id="s-kanban">
@@ -1079,6 +1063,7 @@
     <span class="manage-panel-title">⚙ MANAGE ALFRED</span>
     <button class="manage-close" onclick="toggleManage()">✕</button>
   </div>
+  <div class="manage-panel-body">
   <p style="font-size:13px;font-weight:700;color:#555;margin-bottom:14px;max-width:680px">
     Add, edit, or remove tracked people, projects, and companies. Alfred picks up changes on the next brief run.
   </p>
@@ -1105,6 +1090,10 @@
       </div>
       <div class="ent-field"><label>Tone note <span style="font-weight:400;color:#888">(how Alfred should calibrate communication with this person)</span></label>
         <input type="text" id="ep-new-tone" placeholder="e.g. Direct. High rigor. Expects polish." autocomplete="off">
+      </div>
+      <div class="ent-field" style="display:flex;align-items:center;gap:8px;margin-top:4px">
+        <input type="checkbox" id="ep-new-team" style="width:16px;height:16px;accent-color:var(--black);cursor:pointer;flex-shrink:0">
+        <label for="ep-new-team" style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;cursor:pointer;margin-bottom:0">Direct report / team member <span style="font-weight:400;color:#888;text-transform:none">(surfaces in Team Commitments)</span></label>
       </div>
       <button class="ent-add-btn" onclick="entAddPerson()">ADD ↓</button>
     </div>
@@ -1176,6 +1165,7 @@
     </div>
   </div>
 
+  </div><!-- /manage-panel-body -->
   <div class="mgmt-save-row">
     <button class="mgmt-save-btn" onclick="entSaveAll()">SAVE TO ALFRED ↓</button>
     <span class="mgmt-status" id="mgmt-status"></span>
@@ -1191,6 +1181,7 @@
     <span class="feedback-panel-title">📬 FEEDBACK TO ALFRED</span>
     <button class="feedback-close" onclick="toggleFb()">✕</button>
   </div>
+  <div class="feedback-panel-body">
   <div class="feedback-form">
     <div class="feedback-row">
       <select class="feedback-cat" id="fb-cat">
@@ -1207,6 +1198,7 @@
     </div>
     <div id="fb-history"></div>
   </div>
+  </div><!-- /feedback-panel-body -->
 </div>
 
 <script>
@@ -1607,12 +1599,11 @@
     entPeople.forEach(function(p, i) {
       var div = document.createElement('div');
       div.className = 'ent-item'; div.id = 'ent-person-' + i;
-      var meta = [p.role, p.priority ? '<strong>' + entEsc(p.priority) + '</strong>' : '', p.tone].filter(Boolean).join(' &middot; ');
       div.innerHTML =
         '<div class="ent-item-row">' +
           '<div class="ent-item-body">' +
-            '<div class="ent-item-name">' + entEsc(p.name) + '</div>' +
-            (meta ? '<div class="ent-item-meta">' + (p.role ? entEsc(p.role) : '') + (p.priority ? ' &middot; <strong>' + entEsc(p.priority) + '</strong>' : '') + (p.tone ? ' &middot; ' + entEsc(p.tone) : '') + '</div>' : '') +
+            '<div class="ent-item-name">' + entEsc(p.name) + (p.team_member ? ' <span style="font-size:10px;font-weight:800;background:#0A0A0A;color:#fff;padding:1px 6px;vertical-align:middle;letter-spacing:.04em">TEAM</span>' : '') + '</div>' +
+            ((p.role || p.priority || p.tone) ? '<div class="ent-item-meta">' + (p.role ? entEsc(p.role) : '') + (p.priority ? ' &middot; <strong>' + entEsc(p.priority) + '</strong>' : '') + (p.tone ? ' &middot; ' + entEsc(p.tone) : '') + '</div>' : '') +
           '</div>' +
           '<div class="ent-item-actions">' +
             '<button class="ent-edit-btn" onclick="entEditPerson(' + i + ')">EDIT</button>' +
@@ -1639,6 +1630,7 @@
         }).join('') +
       '</select></div>' +
       '<div class="ent-field"><label>Tone note</label><input type="text" id="ep-edit-tone-' + idx + '" value="' + entEsc(p.tone||'') + '" autocomplete="off"></div>' +
+      '<div class="ent-field" style="display:flex;align-items:center;gap:8px;margin-top:4px"><input type="checkbox" id="ep-edit-team-' + idx + '"' + (p.team_member ? ' checked' : '') + ' style="width:16px;height:16px;accent-color:var(--black);cursor:pointer;flex-shrink:0"><label for="ep-edit-team-' + idx + '" style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;cursor:pointer;margin-bottom:0">Direct report / team member</label></div>' +
       '<div class="ent-form-btns">' +
         '<button class="ent-save-btn" onclick="entSavePerson(' + idx + ')">SAVE</button>' +
         '<button class="ent-cancel-btn" onclick="entRenderPeople()">Cancel</button>' +
@@ -1649,10 +1641,11 @@
 
   function entSavePerson(idx) {
     var p = entPeople[idx]; if (!p) return;
-    p.name     = document.getElementById('ep-edit-name-' + idx).value.trim();
-    p.role     = document.getElementById('ep-edit-role-' + idx).value.trim();
-    p.priority = document.getElementById('ep-edit-priority-' + idx).value;
-    p.tone     = document.getElementById('ep-edit-tone-' + idx).value.trim();
+    p.name        = document.getElementById('ep-edit-name-' + idx).value.trim();
+    p.role        = document.getElementById('ep-edit-role-' + idx).value.trim();
+    p.priority    = document.getElementById('ep-edit-priority-' + idx).value;
+    p.tone        = document.getElementById('ep-edit-tone-' + idx).value.trim();
+    p.team_member = document.getElementById('ep-edit-team-' + idx).checked;
     entRenderPeople();
   }
 
@@ -1677,11 +1670,13 @@
       slug: s, name: name,
       role:     document.getElementById('ep-new-role').value.trim(),
       priority: document.getElementById('ep-new-priority').value,
-      tone:     document.getElementById('ep-new-tone').value.trim()
+      tone:     document.getElementById('ep-new-tone').value.trim(),
+      team_member: document.getElementById('ep-new-team').checked
     });
     document.getElementById('ep-new-name').value = '';
     document.getElementById('ep-new-role').value = '';
     document.getElementById('ep-new-tone').value = '';
+    document.getElementById('ep-new-team').checked = false;
     entRenderPeople();
   }
 

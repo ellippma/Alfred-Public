@@ -170,33 +170,6 @@ def r_team_commitments(people):
         )
     return html
 
-def _product_name():
-    """Read product/initiative name from config, fall back to 'Product'."""
-    try:
-        cfg_path = Path.home() / ".alfred-config.json"
-        if cfg_path.exists():
-            d = json.loads(cfg_path.read_text())
-            name = d.get("template_vars", {}).get("PRODUCT_NAME", "")
-            if name:
-                return name
-    except Exception:
-        pass
-    return "Product"
-
-
-def r_product_signals(signals):
-    html = ""
-    for s in signals:
-        icon = SIGNAL_ICONS.get(s.get("type",""), "⚪")
-        link = f' <a href="{s["url"]}" target="_blank">{esc(s.get("url_text","View →"))}</a>' if s.get("url") else ""
-        html += (
-            f'<div class="signal-card">'
-            f'<div class="signal-icon">{icon}</div>'
-            f'<div><div class="signal-title">{esc(s.get("title",""))}</div>{esc(s.get("body",""))}{link}</div>'
-            f'</div>\n'
-        )
-    return html
-
 def r_drive_mentions(mentions):
     html = ""
     for m in mentions:
@@ -319,21 +292,6 @@ def _check_update():
 def _strftime(dt, fmt):
     """Cross-platform strftime — replaces %-d (macOS-only) with the unpadded day number."""
     return dt.strftime(fmt.replace("%-d", str(dt.day)))
-
-
-def _rollout_days_label():
-    """Return a short date label like 'Jul 1' from config, or 'target' as fallback."""
-    try:
-        cfg_path = Path.home() / ".alfred-config.json"
-        if cfg_path.exists():
-            d = json.loads(cfg_path.read_text())
-            date_str = d.get("template_vars", {}).get("ROLLOUT_DATE", "")
-            if date_str:
-                dt = datetime.strptime(date_str, "%Y-%m-%d")
-                return _strftime(dt, "%b %-d")
-    except Exception:
-        pass
-    return "target"
 
 
 def r_entities():
@@ -586,12 +544,7 @@ def build():
         "SLIPPED_ITEMS":       r_list_items(data.get("slipped",[])),
         "PRIORITY_THREADS":    r_priority_threads(data.get("priority_threads",[])),
         "TEAM_COMMITMENTS":    r_team_commitments(data.get("team_commitments",[])),
-        "PRODUCT_NAME":        _product_name(),
-        "PRODUCT_SIGNALS":     r_product_signals(data.get("product_signals", data.get("elixir_signals", []))),
         "DRIVE_MENTIONS":      r_drive_mentions(data.get("drive_mentions",[])),
-        "ROLLOUT_DAYS":        str(data.get("rollout_days") or "—"),
-        "ROLLOUT_DAYS_LABEL":  _rollout_days_label(),
-        "ROLLOUT_NOTE":        esc(data.get("rollout_note","")),
         "KANBAN_JSON":          r_kanban_json(data.get("kanban")),
         "GENERATED_AT":        datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
         "DELTA_HTML":          delta_html,
