@@ -260,51 +260,6 @@
   .cal-notices { margin-top: 10px; font-size: 12px; font-weight: 700; }
   .cal-notices span { display: block; margin-bottom: 3px; }
 
-  /* ── Prep cards ──────────────────────────────────────────────────── */
-  .prep-toggle {
-    display: inline-flex; align-items: center; gap: 4px; margin-top: 6px;
-    font-family: 'Bangers', cursive; font-size: 11px; letter-spacing: 0.06em;
-    background: #1a1464; color: #fff; border: none; padding: 3px 10px;
-    cursor: pointer; transition: background 0.1s;
-  }
-  .prep-toggle:hover { background: #2d24a0; }
-  .prep-toggle.open { background: var(--black); }
-  .prep-row td { padding: 0 !important; border-top: none !important; }
-  .prep-card {
-    display: none; background: #f5f5ff;
-    border-top: 2px dashed #bbb; border-bottom: 2px solid var(--black);
-  }
-  .prep-card.open { display: block; }
-  .prep-inner {
-    display: grid; grid-template-columns: 1fr 1fr 1fr;
-  }
-  .prep-col { padding: 14px 16px; border-right: 1px solid #ddd; }
-  .prep-col:last-child { border-right: none; }
-  .prep-col-label {
-    font-family: 'Bangers', cursive; font-size: 11px; letter-spacing: 0.08em;
-    color: #777; margin-bottom: 8px; display: flex; align-items: center; gap: 5px;
-  }
-  .prep-meeting-meta { font-size: 11px; color: #999; margin-bottom: 5px; }
-  .prep-meeting-summary { font-size: 12px; line-height: 1.5; font-weight: 400; }
-  .prep-item {
-    display: flex; gap: 7px; margin-bottom: 7px; font-size: 12px;
-    line-height: 1.4; align-items: flex-start; font-weight: 400;
-  }
-  .prep-item-tag {
-    font-family: 'Bangers', cursive; font-size: 10px; letter-spacing: 0.04em;
-    padding: 1px 6px; white-space: nowrap; flex-shrink: 0; margin-top: 1px;
-  }
-  .tag-you { background: var(--red); color: #fff; }
-  .tag-them { background: #1a1464; color: #fff; }
-  .prep-signal {
-    margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;
-    font-size: 12px;
-  }
-  .prep-signal:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-  .prep-signal-who { font-size: 11px; color: #999; margin-bottom: 3px; }
-  .prep-signal-text { line-height: 1.4; font-weight: 400; }
-  .prep-empty { font-size: 12px; color: #bbb; font-style: italic; font-weight: 400; }
-
   /* ── Pills ───────────────────────────────────────────────────────── */
   .pill {
     display: inline-block; font-family: 'Bangers', cursive;
@@ -386,9 +341,8 @@
   .cand-approve:hover:not(:disabled) { background:#22c55e; border-color:#22c55e; color:var(--white); }
   .cand-dismiss:hover:not(:disabled) { background:#ef4444; border-color:#ef4444; color:var(--white); }
   .cand-save-row { display:flex; align-items:center; gap:14px; margin-top:16px; padding-top:14px; border-top:2px solid var(--black); }
-  .cand-save-btn { background:var(--red); color:#fff; border:3px solid var(--black); box-shadow:3px 3px 0 var(--black); padding:8px 18px; font-size:12px; font-weight:800; letter-spacing:.05em; cursor:pointer; transition:transform 0.1s,box-shadow 0.1s; }
-  .cand-save-btn:active { transform:translate(2px,2px); box-shadow:1px 1px 0 var(--black); }
-  .cand-team-label { display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:#555; margin-top:6px; cursor:pointer; }
+  .cand-save-btn { background:var(--black); color:var(--white); border:none; padding:8px 18px; font-size:12px; font-weight:800; letter-spacing:.05em; cursor:pointer; }
+  .cand-save-btn:hover { background:#333; }
   .cand-status { font-size:12px; font-weight:700; color:#22c55e; }
 
   /* ── Metrics ─────────────────────────────────────────────────────── */
@@ -736,15 +690,13 @@
   .feedback-panel {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 199;
     background: var(--white); border-top: 4px solid var(--black);
-    max-height: 60vh; display: flex; flex-direction: column; overflow: hidden;
+    padding: 18px 24px 24px; max-height: 60vh; overflow-y: auto;
     transform: translateY(100%); transition: transform 0.25s ease;
   }
   .feedback-panel.open { transform: translateY(0); }
   .feedback-panel-header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 18px 24px 0; flex-shrink: 0; margin-bottom: 14px;
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;
   }
-  .feedback-panel-body { overflow-y: auto; flex: 1; padding: 0 24px 20px; }
   .feedback-panel-title { font-family: 'Bangers', cursive; font-size: 20px; letter-spacing: 0.06em; }
   .feedback-close { font-size: 22px; cursor: pointer; background: none; border: none; font-weight: 900; color: var(--black); }
   .feedback-form { display: flex; flex-direction: column; gap: 10px; max-width: 640px; }
@@ -788,15 +740,13 @@
   .manage-panel {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 199;
     background: var(--white); border-top: 4px solid var(--black);
-    max-height: 78vh; display: flex; flex-direction: column; overflow: hidden;
+    padding: 18px 24px 28px; max-height: 78vh; overflow-y: auto;
     transform: translateY(100%); transition: transform 0.25s ease;
   }
   .manage-panel.open { transform: translateY(0); }
   .manage-panel-header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 18px 24px 0; flex-shrink: 0; margin-bottom: 12px;
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
   }
-  .manage-panel-body { overflow-y: auto; flex: 1; padding: 0 24px 12px; }
   .manage-panel-title { font-family: 'Bangers', cursive; font-size: 20px; letter-spacing: 0.06em; }
   .manage-close { font-size: 22px; cursor: pointer; background: none; border: none; font-weight: 900; color: var(--black); }
   .mgmt-tabs { display: flex; margin-bottom: 16px; max-width: 680px; }
@@ -890,7 +840,7 @@
     font-family: 'Comic Neue', cursive; cursor: pointer;
   }
   .tag-ac-item:hover { background: var(--black); color: #fff; }
-  .mgmt-save-row { display: flex; align-items: center; gap: 12px; flex-shrink: 0; margin-top: 0; border-top: 2px solid #eee; padding: 14px 24px 20px; }
+  .mgmt-save-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; border-top: 2px solid #eee; padding-top: 14px; }
   .mgmt-save-btn {
     font-family: 'Bangers', cursive; font-size: 15px; letter-spacing: 0.06em;
     background: var(--red); color: #fff;
@@ -996,31 +946,6 @@
     <div class="section-body"><div class="coach-card">{{COACH_NOTE}}</div></div>
   </section>
 
-  <section id="s-threads">
-    <div class="section-title">💬 PRIORITY THREADS! <span class="section-chevron">▾</span></div>
-    <div class="section-body"><div class="card">{{PRIORITY_THREADS}}</div></div>
-  </section>
-
-  <section id="s-team">
-    <div class="section-title">🤝 TEAM COMMITMENTS! <span class="section-chevron">▾</span></div>
-    <div class="section-body"><div class="card">{{TEAM_COMMITMENTS}}</div></div>
-  </section>
-
-  <section id="s-candidates" {{CANDIDATES_HIDDEN}}>
-    <div class="section-title">🧠 MEMORY PROPOSALS <span class="section-chevron">▾</span></div>
-    <div class="section-body"><div class="card">{{CANDIDATES_HTML}}</div></div>
-  </section>
-
-  <section id="s-drive">
-    <div class="section-title">📄 DRIVE @-MENTIONS! <span class="section-chevron">▾</span></div>
-    <div class="section-body"><div class="card">{{DRIVE_MENTIONS}}</div></div>
-  </section>
-
-  <section id="s-milestones" {{MILESTONES_HIDDEN}}>
-    <div class="section-title">🗂 PROJECTS! <span class="section-chevron">▾</span></div>
-    <div class="section-body">{{MILESTONES_SECTION}}</div>
-  </section>
-
   <section id="s-today">
     <div class="section-title">⏰ TODAY — {{DATE_SHORT}} <span class="section-chevron">▾</span></div>
     <div class="section-body">
@@ -1032,8 +957,63 @@
     </div>
   </section>
 
+  <section id="s-due">
+    <div class="section-title">📋 DUE THIS WEEK! <span class="section-chevron">▾</span></div>
+    <div class="section-body"><div class="card"><ul>{{DUE_THIS_WEEK_ITEMS}}</ul></div></div>
+  </section>
+
+  <section id="s-slipped">
+    <div class="section-title">⚠️ SLIPPED! <span class="section-chevron">▾</span></div>
+    <div class="section-body"><div class="card"><ul>{{SLIPPED_ITEMS}}</ul></div></div>
+  </section>
+
+  <section id="s-threads">
+    <div class="section-title">💬 PRIORITY THREADS! <span class="section-chevron">▾</span></div>
+    <div class="section-body"><div class="card">{{PRIORITY_THREADS}}</div></div>
+  </section>
+
+  <section id="s-team">
+    <div class="section-title">🤝 TEAM COMMITMENTS! <span class="section-chevron">▾</span></div>
+    <div class="section-body"><div class="card">{{TEAM_COMMITMENTS}}</div></div>
+  </section>
+
+  <section id="s-milestones" {{MILESTONES_HIDDEN}}>
+    <div class="section-title">🗂 PROJECTS! <span class="section-chevron">▾</span></div>
+    <div class="section-body">{{MILESTONES_SECTION}}</div>
+  </section>
+
+  <section id="s-product-signals">
+    <div class="section-title">📡 {{PRODUCT_NAME}} SIGNALS! <span class="section-chevron">▾</span></div>
+    <div class="section-body">{{PRODUCT_SIGNALS}}</div>
+  </section>
+
+  <section id="s-drive">
+    <div class="section-title">📄 DRIVE @-MENTIONS! <span class="section-chevron">▾</span></div>
+    <div class="section-body"><div class="card">{{DRIVE_MENTIONS}}</div></div>
+  </section>
+
+  <section id="s-candidates" {{CANDIDATES_HIDDEN}}>
+    <div class="section-title">🧠 MEMORY PROPOSALS <span class="section-chevron">▾</span></div>
+    <div class="section-body"><div class="card">{{CANDIDATES_HTML}}</div></div>
+  </section>
+
+  <section id="s-metrics">
+    <div class="section-title">📊 ROLLOUT METRICS! <span class="section-chevron">▾</span></div>
+    <div class="section-body">
+      <div class="metrics-card">
+        <div class="metric">
+          <div class="metric-number">{{ROLLOUT_DAYS}}</div>
+          <div class="label">Days to {{ROLLOUT_DAYS_LABEL}}!</div>
+        </div>
+        <div class="metric-body">
+          {{ROLLOUT_NOTE}}
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section id="s-kanban">
-    <div class="section-title">📋 KANBAN BOARD</div>
+    <div class="section-title">📋 BOARD</div>
     <div class="section-body">
       <div id="kb-ack" class="kb-ack" style="display:none"></div>
       <div class="kanban-board">
@@ -1099,7 +1079,6 @@
     <span class="manage-panel-title">⚙ MANAGE ALFRED</span>
     <button class="manage-close" onclick="toggleManage()">✕</button>
   </div>
-  <div class="manage-panel-body">
   <p style="font-size:13px;font-weight:700;color:#555;margin-bottom:14px;max-width:680px">
     Add, edit, or remove tracked people, projects, and companies. Alfred picks up changes on the next brief run.
   </p>
@@ -1126,10 +1105,6 @@
       </div>
       <div class="ent-field"><label>Tone note <span style="font-weight:400;color:#888">(how Alfred should calibrate communication with this person)</span></label>
         <input type="text" id="ep-new-tone" placeholder="e.g. Direct. High rigor. Expects polish." autocomplete="off">
-      </div>
-      <div class="ent-field" style="display:flex;align-items:center;gap:8px;margin-top:4px">
-        <input type="checkbox" id="ep-new-team" style="width:16px;height:16px;accent-color:var(--black);cursor:pointer;flex-shrink:0">
-        <label for="ep-new-team" style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;cursor:pointer;margin-bottom:0">Direct report / team member <span style="font-weight:400;color:#888;text-transform:none">(surfaces in Team Commitments)</span></label>
       </div>
       <button class="ent-add-btn" onclick="entAddPerson()">ADD ↓</button>
     </div>
@@ -1174,10 +1149,18 @@
       <div class="ent-field"><label>Type</label>
         <select id="ec-new-type">
           <option value="customer">customer</option>
-          <option value="prospect">prospect</option>
+          <option value="internal-team">internal-team</option>
           <option value="partner">partner</option>
           <option value="vendor">vendor</option>
-          <option value="internal-team">internal-team</option>
+        </select>
+      </div>
+      <div class="ent-field"><label>Tier <span style="font-weight:400;color:#888">(optional)</span></label>
+        <select id="ec-new-tier">
+          <option value="">—</option>
+          <option value="strategic">strategic</option>
+          <option value="enterprise">enterprise</option>
+          <option value="mid-market">mid-market</option>
+          <option value="smb">smb</option>
         </select>
       </div>
       <div class="ent-field"><label>Domain <span style="font-weight:400;color:#888">(optional — e.g. lakesidebank.com)</span></label>
@@ -1193,7 +1176,6 @@
     </div>
   </div>
 
-  </div><!-- /manage-panel-body -->
   <div class="mgmt-save-row">
     <button class="mgmt-save-btn" onclick="entSaveAll()">SAVE TO ALFRED ↓</button>
     <span class="mgmt-status" id="mgmt-status"></span>
@@ -1209,7 +1191,6 @@
     <span class="feedback-panel-title">📬 FEEDBACK TO ALFRED</span>
     <button class="feedback-close" onclick="toggleFb()">✕</button>
   </div>
-  <div class="feedback-panel-body">
   <div class="feedback-form">
     <div class="feedback-row">
       <select class="feedback-cat" id="fb-cat">
@@ -1226,7 +1207,6 @@
     </div>
     <div id="fb-history"></div>
   </div>
-  </div><!-- /feedback-panel-body -->
 </div>
 
 <script>
@@ -1251,17 +1231,6 @@
       updateExpandBtn();
     });
   });
-
-  function togglePrep(id) {
-    var card = document.getElementById('prep-' + id);
-    var btn  = document.querySelector('.prep-toggle[data-eid="' + id + '"]');
-    if (!card) return;
-    var isOpen = card.classList.toggle('open');
-    if (btn) {
-      btn.textContent = isOpen ? '📋 PREP ▴' : '📋 PREP ▾';
-      btn.classList.toggle('open', isOpen);
-    }
-  }
 
   function toggleAll() {
     const bodies = document.querySelectorAll('section[id] .section-body');
@@ -1638,11 +1607,12 @@
     entPeople.forEach(function(p, i) {
       var div = document.createElement('div');
       div.className = 'ent-item'; div.id = 'ent-person-' + i;
+      var meta = [p.role, p.priority ? '<strong>' + entEsc(p.priority) + '</strong>' : '', p.tone].filter(Boolean).join(' &middot; ');
       div.innerHTML =
         '<div class="ent-item-row">' +
           '<div class="ent-item-body">' +
-            '<div class="ent-item-name">' + entEsc(p.name) + (p.team_member ? ' <span style="font-size:10px;font-weight:800;background:#0A0A0A;color:#fff;padding:1px 6px;vertical-align:middle;letter-spacing:.04em">TEAM</span>' : '') + '</div>' +
-            ((p.role || p.priority || p.tone) ? '<div class="ent-item-meta">' + (p.role ? entEsc(p.role) : '') + (p.priority ? ' &middot; <strong>' + entEsc(p.priority) + '</strong>' : '') + (p.tone ? ' &middot; ' + entEsc(p.tone) : '') + '</div>' : '') +
+            '<div class="ent-item-name">' + entEsc(p.name) + '</div>' +
+            (meta ? '<div class="ent-item-meta">' + (p.role ? entEsc(p.role) : '') + (p.priority ? ' &middot; <strong>' + entEsc(p.priority) + '</strong>' : '') + (p.tone ? ' &middot; ' + entEsc(p.tone) : '') + '</div>' : '') +
           '</div>' +
           '<div class="ent-item-actions">' +
             '<button class="ent-edit-btn" onclick="entEditPerson(' + i + ')">EDIT</button>' +
@@ -1669,7 +1639,6 @@
         }).join('') +
       '</select></div>' +
       '<div class="ent-field"><label>Tone note</label><input type="text" id="ep-edit-tone-' + idx + '" value="' + entEsc(p.tone||'') + '" autocomplete="off"></div>' +
-      '<div class="ent-field" style="display:flex;align-items:center;gap:8px;margin-top:4px"><input type="checkbox" id="ep-edit-team-' + idx + '"' + (p.team_member ? ' checked' : '') + ' style="width:16px;height:16px;accent-color:var(--black);cursor:pointer;flex-shrink:0"><label for="ep-edit-team-' + idx + '" style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;cursor:pointer;margin-bottom:0">Direct report / team member</label></div>' +
       '<div class="ent-form-btns">' +
         '<button class="ent-save-btn" onclick="entSavePerson(' + idx + ')">SAVE</button>' +
         '<button class="ent-cancel-btn" onclick="entRenderPeople()">Cancel</button>' +
@@ -1680,11 +1649,10 @@
 
   function entSavePerson(idx) {
     var p = entPeople[idx]; if (!p) return;
-    p.name        = document.getElementById('ep-edit-name-' + idx).value.trim();
-    p.role        = document.getElementById('ep-edit-role-' + idx).value.trim();
-    p.priority    = document.getElementById('ep-edit-priority-' + idx).value;
-    p.tone        = document.getElementById('ep-edit-tone-' + idx).value.trim();
-    p.team_member = document.getElementById('ep-edit-team-' + idx).checked;
+    p.name     = document.getElementById('ep-edit-name-' + idx).value.trim();
+    p.role     = document.getElementById('ep-edit-role-' + idx).value.trim();
+    p.priority = document.getElementById('ep-edit-priority-' + idx).value;
+    p.tone     = document.getElementById('ep-edit-tone-' + idx).value.trim();
     entRenderPeople();
   }
 
@@ -1709,13 +1677,11 @@
       slug: s, name: name,
       role:     document.getElementById('ep-new-role').value.trim(),
       priority: document.getElementById('ep-new-priority').value,
-      tone:     document.getElementById('ep-new-tone').value.trim(),
-      team_member: document.getElementById('ep-new-team').checked
+      tone:     document.getElementById('ep-new-tone').value.trim()
     });
     document.getElementById('ep-new-name').value = '';
     document.getElementById('ep-new-role').value = '';
     document.getElementById('ep-new-tone').value = '';
-    document.getElementById('ep-new-team').checked = false;
     entRenderPeople();
   }
 
@@ -1773,14 +1739,20 @@
       '</select></div>' +
       '<div class="ent-field"><label>Target date <span style="font-weight:400;color:#888">(optional)</span></label>' +
         '<input type="date" id="ej-edit-date-' + idx + '" value="' + entEsc(proj.target_date||'') + '"></div>' +
-      '<div class="ent-field"><label>Watch channels <span style="font-weight:400;color:#888">(Slack channels Alfred monitors)</span></label>' +
-        '<div class="tag-input-wrap" id="ej-edit-ch-wrap-' + idx + '"><input class="tag-input-inner" placeholder="Type and press Enter…"></div></div>' +
+      '<div class="ent-field"><label>Watch people</label>' +
+        '<div class="tag-input-wrap" id="ej-edit-people-wrap-' + idx + '"><input class="tag-input-inner" placeholder="Type and press Enter\u2026"></div></div>' +
+      '<div class="ent-field"><label>Watch keywords</label>' +
+        '<div class="tag-input-wrap" id="ej-edit-kw-wrap-' + idx + '"><input class="tag-input-inner" placeholder="Type and press Enter\u2026"></div></div>' +
+      '<div class="ent-field"><label>Watch channels</label>' +
+        '<div class="tag-input-wrap" id="ej-edit-ch-wrap-' + idx + '"><input class="tag-input-inner" placeholder="Type and press Enter\u2026"></div></div>' +
       '<div class="ent-form-btns">' +
         '<button class="ent-save-btn" onclick="entSaveProject(' + idx + ')">SAVE</button>' +
         '<button class="ent-cancel-btn" onclick="entRenderProjects()">Cancel</button>' +
       '</div>';
     div.appendChild(form);
-    tagInit('ej-edit-ch-wrap-' + idx, proj.watch_channels || [], null);
+    tagInit('ej-edit-people-wrap-' + idx, proj.watch_people   || [], entPeopleAcData());
+    tagInit('ej-edit-kw-wrap-'     + idx, proj.watch_keywords || [], null);
+    tagInit('ej-edit-ch-wrap-'     + idx, proj.watch_channels || [], null);
     document.getElementById('ej-edit-name-' + idx).focus();
   }
 
@@ -1789,8 +1761,9 @@
     proj.name           = document.getElementById('ej-edit-name-'   + idx).value.trim();
     proj.status         = document.getElementById('ej-edit-status-' + idx).value;
     proj.target_date    = document.getElementById('ej-edit-date-'   + idx).value;
-    proj.watch_channels = tagGet('ej-edit-ch-wrap-' + idx);
-    // watch_people / watch_keywords preserved — Alfred manages from signals
+    proj.watch_people   = tagGet('ej-edit-people-wrap-' + idx);
+    proj.watch_keywords = tagGet('ej-edit-kw-wrap-'     + idx);
+    proj.watch_channels = tagGet('ej-edit-ch-wrap-'     + idx);
     entRenderProjects();
   }
 
@@ -1824,7 +1797,7 @@
   }
 
   // ── Companies ────────────────────────────────────────────────────────────
-  var ENT_COMPANY_TYPE_LABELS = { customer: 'CUSTOMER', prospect: 'PROSPECT', 'internal-team': 'INTERNAL', partner: 'PARTNER', vendor: 'VENDOR' };
+  var ENT_COMPANY_TYPE_LABELS = { customer: 'CUSTOMER', 'internal-team': 'INTERNAL', partner: 'PARTNER', vendor: 'VENDOR' };
 
   function entRenderCompanies() {
     var list = document.getElementById('ent-companies-list');
@@ -1838,6 +1811,7 @@
         div.className = 'ent-item'; div.id = 'ent-company-' + i;
         var typeLabel = ENT_COMPANY_TYPE_LABELS[co.type] || (co.type||'').toUpperCase();
         var metaParts = [];
+        if (co.tier && co.tier !== '—' && co.tier !== '') metaParts.push('📊 ' + co.tier);
         if (co.domain) metaParts.push('🌐 ' + co.domain);
         if (co.watch_keywords && co.watch_keywords.length) metaParts.push('🔍 ' + co.watch_keywords.join(', '));
         if (co.watch_channels && co.watch_channels.length) metaParts.push('💬 ' + co.watch_channels.join(', '));
@@ -1871,23 +1845,38 @@
     form.innerHTML =
       '<div class="ent-field"><label>Name</label><input type="text" id="ec-edit-name-' + idx + '" value="' + entEsc(co.name||'') + '" autocomplete="off"></div>' +
       '<div class="ent-field"><label>Type</label><select id="ec-edit-type-' + idx + '">' +
-        ['customer','prospect','partner','vendor','internal-team'].map(function(v){
+        ['customer','internal-team','partner','vendor'].map(function(v){
           return '<option value="' + v + '"' + (co.type===v?' selected':'') + '>' + v + '</option>';
         }).join('') +
       '</select></div>' +
+      '<div class="ent-field"><label>Tier</label><select id="ec-edit-tier-' + idx + '">' +
+        ['','strategic','enterprise','mid-market','smb'].map(function(v){
+          return '<option value="' + v + '"' + (co.tier===v?' selected':'') + '>' + (v||'—') + '</option>';
+        }).join('') +
+      '</select></div>' +
+      '<div class="ent-field"><label>Domain</label><input type="text" id="ec-edit-domain-' + idx + '" value="' + entEsc(co.domain||'') + '" autocomplete="off"></div>' +
+      '<div class="ent-field"><label>Watch keywords</label>' +
+        '<div class="tag-input-wrap" id="ec-edit-kw-wrap-' + idx + '"><input class="tag-input-inner" placeholder="Type and press Enter\u2026"></div></div>' +
+      '<div class="ent-field"><label>Watch channels</label>' +
+        '<div class="tag-input-wrap" id="ec-edit-ch-wrap-' + idx + '"><input class="tag-input-inner" placeholder="Type and press Enter\u2026"></div></div>' +
       '<div class="ent-form-btns">' +
         '<button class="ent-save-btn" onclick="entSaveCompany(' + idx + ')">SAVE</button>' +
         '<button class="ent-cancel-btn" onclick="entRenderCompanies()">Cancel</button>' +
       '</div>';
     div.appendChild(form);
+    tagInit('ec-edit-kw-wrap-' + idx, co.watch_keywords || [], null);
+    tagInit('ec-edit-ch-wrap-' + idx, co.watch_channels || [], null);
     document.getElementById('ec-edit-name-' + idx).focus();
   }
 
   function entSaveCompany(idx) {
     var co = entCompanies[idx]; if (!co) return;
-    co.name = document.getElementById('ec-edit-name-' + idx).value.trim();
-    co.type = document.getElementById('ec-edit-type-' + idx).value;
-    // tier / domain / watch_keywords / watch_channels preserved — Alfred manages from signals
+    co.name           = document.getElementById('ec-edit-name-'   + idx).value.trim();
+    co.type           = document.getElementById('ec-edit-type-'   + idx).value;
+    co.tier           = document.getElementById('ec-edit-tier-'   + idx).value;
+    co.domain         = document.getElementById('ec-edit-domain-' + idx).value.trim();
+    co.watch_keywords = tagGet('ec-edit-kw-wrap-' + idx);
+    co.watch_channels = tagGet('ec-edit-ch-wrap-' + idx);
     entRenderCompanies();
   }
 
@@ -1907,6 +1896,7 @@
     entCompanies.push({
       slug: s, name: name,
       type:           document.getElementById('ec-new-type').value,
+      tier:           document.getElementById('ec-new-tier').value,
       domain:         document.getElementById('ec-new-domain').value.trim(),
       watch_keywords: tagGet('ec-new-kw-wrap'),
       watch_channels: tagGet('ec-new-ch-wrap')
@@ -1980,14 +1970,7 @@
     var card = document.getElementById('cand-' + id);
     if (!card) return;
     var proposal = allCandidates.find(function(c) { return c.id === id; });
-    if (proposal) {
-      var copy = JSON.parse(JSON.stringify(proposal));
-      var teamCb = document.getElementById('cand-team-' + id);
-      if (teamCb) copy.data = Object.assign({}, copy.data, { team_member: teamCb.checked });
-      var coTypeSel = document.getElementById('cand-cotype-' + id);
-      if (coTypeSel) copy.data = Object.assign({}, copy.data, { type: coTypeSel.value });
-      approvedCandidates[id] = copy;
-    }
+    if (proposal) approvedCandidates[id] = proposal;
     card.classList.add('cand-approved');
     var approveBtn = card.querySelector('.cand-approve');
     var dismissBtn = card.querySelector('.cand-dismiss');
@@ -2029,25 +2012,16 @@
   }
 
   // ── Kanban Board ──────────────────────────────────────────────────────────
-  const KB_KEY      = 'alfred-kanban-v1';
-  const KB_TS_KEY   = 'alfred-kanban-ts';
-  const KB_AUTO_KEY = 'alfred-kanban-auto-dismissed';
+  const KB_KEY    = 'alfred-kanban-v1';
+  const KB_TS_KEY = 'alfred-kanban-ts';
   let kbCards  = [];
   let kbDragId = null;
 
   function kbGenId() { return 'kb-' + Math.random().toString(36).slice(2, 9); }
   function kbToday() { return new Date().toISOString().split('T')[0]; }
   function kbEsc(s)  { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-  function kbHash(s) { var h=5381; for(var i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))&0x7fffffff; return h.toString(36); }
 
   function kbPersist() { localStorage.setItem(KB_KEY, JSON.stringify(kbCards)); }
-  function kbAutoDismiss(id) {
-    var d = {}; try { d = JSON.parse(localStorage.getItem(KB_AUTO_KEY)||'{}'); } catch(e) {}
-    d[id] = true; localStorage.setItem(KB_AUTO_KEY, JSON.stringify(d));
-  }
-  function kbIsAutoDismissed(id) {
-    try { return !!JSON.parse(localStorage.getItem(KB_AUTO_KEY)||'{}')[id]; } catch(e) { return false; }
-  }
 
   function kbInit() {
     // Parse Alfred's data blob
@@ -2057,7 +2031,6 @@
     const boardState  = alfredData.board_state  || null;
     const boardTs     = alfredData.board_state_ts || 0;
     const newTodo     = alfredData.new_todo     || [];
-    const autoSeed    = alfredData.auto_seed    || { due: [], slipped: [] };
     const ack         = alfredData.acknowledgement || '';
 
     // Decide authoritative source: Alfred's processed state wins if newer
@@ -2079,22 +2052,6 @@
         existingIds.add(card.id);
       }
     });
-
-    // Auto-seed due-this-week and slipped items (stable IDs, skip if dismissed or already present)
-    var autoToAdd = [];
-    (autoSeed.due || []).forEach(function(text) {
-      var id = 'auto-due-' + kbHash(text);
-      if (!existingIds.has(id) && !kbIsAutoDismissed(id))
-        autoToAdd.push({ id: id, title: '📋 ' + text, description: '', col: 'todo', source: 'auto-due', added: kbToday() });
-    });
-    (autoSeed.slipped || []).forEach(function(text) {
-      var id = 'auto-slip-' + kbHash(text);
-      if (!existingIds.has(id) && !kbIsAutoDismissed(id))
-        autoToAdd.push({ id: id, title: '⚠️ ' + text, description: '', col: 'todo', source: 'auto-slip', added: kbToday() });
-    });
-    // Prepend so they appear at top of To-Do
-    autoToAdd.reverse().forEach(function(c) { kbCards.unshift(c); existingIds.add(c.id); });
-
     kbPersist();
 
     // Show acknowledgement
@@ -2159,10 +2116,7 @@
     var card = kbCards.find(function(c){ return c.id === kbDragId; });
     if (card) {
       card.col = col;
-      if (col === 'done') {
-        if (!card.moved_done) card.moved_done = kbToday();
-        if (card.id.startsWith('auto-')) kbAutoDismiss(card.id);
-      }
+      if (col === 'done' && !card.moved_done) card.moved_done = kbToday();
     }
     kbPersist();
     kbRender();
@@ -2204,7 +2158,6 @@
 
   function kbDelete(id) {
     if (!confirm('Delete this card?')) return;
-    if (id.startsWith('auto-')) kbAutoDismiss(id);
     kbCards = kbCards.filter(function(c){ return c.id !== id; });
     kbPersist(); kbRender();
   }
