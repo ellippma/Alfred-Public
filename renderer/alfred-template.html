@@ -946,27 +946,6 @@
     <div class="section-body"><div class="coach-card">{{COACH_NOTE}}</div></div>
   </section>
 
-  <section id="s-today">
-    <div class="section-title">⏰ TODAY — {{DATE_SHORT}} <span class="section-chevron">▾</span></div>
-    <div class="section-body">
-      <table class="cal-table">
-        <thead><tr><th>TIME</th><th>MEETING</th><th>NOTE</th></tr></thead>
-        <tbody>{{TODAY_ROWS}}</tbody>
-      </table>
-      <div class="cal-notices">{{TODAY_NOTICES}}</div>
-    </div>
-  </section>
-
-  <section id="s-due">
-    <div class="section-title">📋 DUE THIS WEEK! <span class="section-chevron">▾</span></div>
-    <div class="section-body"><div class="card"><ul>{{DUE_THIS_WEEK_ITEMS}}</ul></div></div>
-  </section>
-
-  <section id="s-slipped">
-    <div class="section-title">⚠️ SLIPPED! <span class="section-chevron">▾</span></div>
-    <div class="section-body"><div class="card"><ul>{{SLIPPED_ITEMS}}</ul></div></div>
-  </section>
-
   <section id="s-threads">
     <div class="section-title">💬 PRIORITY THREADS! <span class="section-chevron">▾</span></div>
     <div class="section-body"><div class="card">{{PRIORITY_THREADS}}</div></div>
@@ -977,6 +956,16 @@
     <div class="section-body"><div class="card">{{TEAM_COMMITMENTS}}</div></div>
   </section>
 
+  <section id="s-candidates" {{CANDIDATES_HIDDEN}}>
+    <div class="section-title">🧠 MEMORY PROPOSALS <span class="section-chevron">▾</span></div>
+    <div class="section-body"><div class="card">{{CANDIDATES_HTML}}</div></div>
+  </section>
+
+  <section id="s-drive">
+    <div class="section-title">📄 DRIVE @-MENTIONS! <span class="section-chevron">▾</span></div>
+    <div class="section-body"><div class="card">{{DRIVE_MENTIONS}}</div></div>
+  </section>
+
   <section id="s-milestones" {{MILESTONES_HIDDEN}}>
     <div class="section-title">🗂 PROJECTS! <span class="section-chevron">▾</span></div>
     <div class="section-body">{{MILESTONES_SECTION}}</div>
@@ -985,16 +974,6 @@
   <section id="s-product-signals">
     <div class="section-title">📡 {{PRODUCT_NAME}} SIGNALS! <span class="section-chevron">▾</span></div>
     <div class="section-body">{{PRODUCT_SIGNALS}}</div>
-  </section>
-
-  <section id="s-drive">
-    <div class="section-title">📄 DRIVE @-MENTIONS! <span class="section-chevron">▾</span></div>
-    <div class="section-body"><div class="card">{{DRIVE_MENTIONS}}</div></div>
-  </section>
-
-  <section id="s-candidates" {{CANDIDATES_HIDDEN}}>
-    <div class="section-title">🧠 MEMORY PROPOSALS <span class="section-chevron">▾</span></div>
-    <div class="section-body"><div class="card">{{CANDIDATES_HTML}}</div></div>
   </section>
 
   <section id="s-metrics">
@@ -1012,8 +991,19 @@
     </div>
   </section>
 
+  <section id="s-today">
+    <div class="section-title">⏰ TODAY — {{DATE_SHORT}} <span class="section-chevron">▾</span></div>
+    <div class="section-body">
+      <table class="cal-table">
+        <thead><tr><th>TIME</th><th>MEETING</th><th>NOTE</th></tr></thead>
+        <tbody>{{TODAY_ROWS}}</tbody>
+      </table>
+      <div class="cal-notices">{{TODAY_NOTICES}}</div>
+    </div>
+  </section>
+
   <section id="s-kanban">
-    <div class="section-title">📋 BOARD</div>
+    <div class="section-title">📋 KANBAN BOARD</div>
     <div class="section-body">
       <div id="kb-ack" class="kb-ack" style="display:none"></div>
       <div class="kanban-board">
