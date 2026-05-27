@@ -498,7 +498,7 @@ def r_candidates():
         # importance (always-respond / director-plus / team / partner) before approving.
         # Alfred's suggested priority is pre-selected; user can override inline.
         PRIORITY_OPTIONS = [
-            ("always-respond", "🔴 Always respond — Nathaniel-level"),
+            ("always-respond", "🔴 Always respond — C-suite / exec"),
             ("director-plus",  "🟡 Director+ — VP / Dir priority"),
             ("team",           "🟢 Team — direct report"),
             ("partner",        "⚪ Partner — peer / collaborator"),
