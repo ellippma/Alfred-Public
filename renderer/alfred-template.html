@@ -1995,7 +1995,21 @@
     var card = document.getElementById('cand-' + id);
     if (!card) return;
     var proposal = allCandidates.find(function(c) { return c.id === id; });
-    if (proposal) approvedCandidates[id] = proposal;
+    if (proposal) {
+      // Deep-copy so we never mutate the shared allCandidates entry
+      proposal = JSON.parse(JSON.stringify(proposal));
+      if (!proposal.data) proposal.data = {};
+      // Capture priority dropdown override (new_person cards only)
+      var priorityEl = document.getElementById('cand-priority-' + id);
+      if (priorityEl) proposal.data.priority = priorityEl.value;
+      // Capture team-member checkbox
+      var teamEl = document.getElementById('cand-team-' + id);
+      if (teamEl) proposal.data.is_team = teamEl.checked;
+      // Capture company-type dropdown (new_company cards only)
+      var cotypeEl = document.getElementById('cand-cotype-' + id);
+      if (cotypeEl) proposal.data.type = cotypeEl.value;
+      approvedCandidates[id] = proposal;
+    }
     card.classList.add('cand-approved');
     var approveBtn = card.querySelector('.cand-approve');
     var dismissBtn = card.querySelector('.cand-dismiss');

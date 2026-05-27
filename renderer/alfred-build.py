@@ -494,6 +494,31 @@ def r_candidates():
             f' Direct report / team member</label>'
         ) if p.get("type") == "new_person" else ""
 
+        # Priority dropdown — only for new_person proposals so Ethan can set
+        # importance (always-respond / director-plus / team / partner) before approving.
+        # Alfred's suggested priority is pre-selected; user can override inline.
+        PRIORITY_OPTIONS = [
+            ("always-respond", "🔴 Always respond — Nathaniel-level"),
+            ("director-plus",  "🟡 Director+ — VP / Dir priority"),
+            ("team",           "🟢 Team — direct report"),
+            ("partner",        "⚪ Partner — peer / collaborator"),
+        ]
+        current_priority = p.get("data", {}).get("priority", "director-plus")
+        if p.get("type") == "new_person":
+            opts = "".join(
+                f'<option value="{val}"{" selected" if val == current_priority else ""}>{label}</option>'
+                for val, label in PRIORITY_OPTIONS
+            )
+            priority_dd = (
+                f'<div style="display:flex;align-items:center;gap:8px;margin-top:6px">'
+                f'<span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#555;white-space:nowrap">Priority</span>'
+                f'<select id="cand-priority-{pid}" style="font-family:\'Comic Neue\',cursive;font-size:12px;font-weight:700;border:2px solid #0A0A0A;padding:3px 6px;background:#fff;cursor:pointer">'
+                f'{opts}'
+                f'</select></div>'
+            )
+        else:
+            priority_dd = ""
+
         current_type = esc(p.get("data", {}).get("type", "prospect"))
         co_type_dd = (
             f'<div style="display:flex;align-items:center;gap:8px;margin-top:6px">'
@@ -514,10 +539,10 @@ def r_candidates():
             f'<div class="cand-text">'
             f'<div class="cand-title">{title}</div>'
             f'<div class="cand-subtitle">{subtitle}</div>'
-            f'{team_cb}{co_type_dd}'
+            f'{team_cb}{priority_dd}{co_type_dd}'
             f'</div></div>'
             f'<div class="cand-right">'
-            f'<span class="conf-badge {conf_cls}">{conf_lbl}</span>'
+            f'<span class="conf-badge {conf_cls}" title="Alfred\'s confidence this proposal should exist">CONF: {conf_lbl}</span>'
             f'<button class="cand-btn cand-approve" onclick="approveCandidate(\'{pid}\')">Approve ✓</button>'
             f'<button class="cand-btn cand-dismiss" onclick="dismissCandidate(\'{pid}\')">Dismiss ✕</button>'
             f'</div></div>\n'
