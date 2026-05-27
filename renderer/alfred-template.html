@@ -482,11 +482,12 @@
 
   /* Checklist */
   .np-list { list-style: none; margin: 0; padding: 0; }
-  .np-row { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
-  .np-cb { width: 14px; height: 14px; flex-shrink: 0; cursor: pointer; accent-color: var(--blue); }
+  .np-row { display: flex; align-items: flex-start; gap: 5px; margin-bottom: 4px; }
+  .np-cb { width: 14px; height: 14px; flex-shrink: 0; cursor: pointer; accent-color: var(--blue); margin-top: 2px; }
   .np-txt {
     flex: 1; border: none; outline: none; background: transparent;
     font-size: 12px; font-family: 'Comic Neue', cursive; font-weight: 700; min-width: 0;
+    resize: none; overflow: hidden; line-height: 1.4; padding: 0;
   }
   .np-txt:focus { background: #fffde0; }
   .np-row.done .np-txt { text-decoration: line-through; color: #aaa; }
@@ -1380,17 +1381,20 @@
       npSaveData(d2); npRenderList();
     });
 
-    const inp = document.createElement('input');
-    inp.type  = 'text';
+    const inp = document.createElement('textarea');
+    inp.rows  = 1;
     inp.className = 'np-txt';
     inp.value = item.text || '';
     inp.placeholder = idx === 0 ? 'Add item…' : '';
+    const autoResize = () => { inp.style.height = 'auto'; inp.style.height = inp.scrollHeight + 'px'; };
     inp.addEventListener('input', () => {
+      autoResize();
       const d2 = npData();
       if (d2.checklist[idx] !== undefined) { d2.checklist[idx].text = inp.value; npSaveData(d2); }
     });
+    setTimeout(autoResize, 0);
     inp.addEventListener('keydown', e => {
-      if (e.key === 'Enter') {
+      if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         const d2 = npData();
         d2.checklist.splice(idx + 1, 0, { text: '', done: false });
